@@ -1,3 +1,4 @@
+// route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
@@ -29,7 +30,9 @@ export async function POST(req: NextRequest) {
                 savedImages: {
                     push: imageUrl  // Add the current imageUrl to savedImages array
                 },
-                piaddress: piaddress,  // Update the Pi address
+                piaddress: {
+                    push: piaddress  // Changed to push to array
+                },
                 imageUrl: null,     // Clear the temporary imageUrl
                 isUpload: false,    // Reset upload status
                 istransaction: true // Set transaction status to true
