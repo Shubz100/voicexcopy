@@ -14,6 +14,7 @@ const PaymentProof = () => {
   const [piAddress, setPiAddress] = useState<string>('');
   const [hasStoredAddress, setHasStoredAddress] = useState<boolean>(false);
   const [isEditingAddress, setIsEditingAddress] = useState<boolean>(false);
+  const [previousAddresses, setPreviousAddresses] = useState<string[]>([]);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -38,8 +39,9 @@ const PaymentProof = () => {
       const userData = await response.json();
       setImageUploaded(userData.isUpload || false);
       setImageUrl(userData.imageUrl || null);
-      if (userData.piaddress) {
-        setPiAddress(userData.piaddress);
+      if (userData.piaddress && userData.piaddress.length > 0) {
+        setPiAddress(userData.piaddress[userData.piaddress.length - 1]);
+        setPreviousAddresses(userData.piaddress);
         setHasStoredAddress(true);
       }
     } catch (error) {
@@ -120,7 +122,11 @@ const PaymentProof = () => {
         });
         
         if (response.ok) {
-          setHasStoredAddress(true);
+          const data = await response.json();
+          if (data.piaddress) {
+            setPreviousAddresses(data.piaddress);
+            setHasStoredAddress(true);
+          }
           setIsEditingAddress(false);
           router.push('/summary');
         }
