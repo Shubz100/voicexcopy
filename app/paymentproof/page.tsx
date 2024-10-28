@@ -139,7 +139,7 @@ const PaymentProof = () => {
         }
         setIsEditingAddress(false);
         // Use replace instead of push to avoid the back button issue
-        router.replace('/summary');
+        router.replace('./summary');
       }
     } catch (error) {
       console.error('Error saving data:', error);
