@@ -8,24 +8,24 @@ generator client {
 }
 
 model User {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  telegramId     Int     @unique
+  id             String    @id @default(auto()) @map("_id") @db.ObjectId
+  telegramId     Int       @unique
   username       String?
   firstName      String?
   lastName       String?
-  points         Int     @default(0)
-  level          Int     @default(1)  // Added level field
-  introSeen      Boolean  @default(false)
-  paymentMethod  String?
-  paymentAddress String?
-  isUpload       Boolean  @default(false)
-  imageUrl       String?  // For temporary storage
-  savedImages    String[] @default([])  // For permanent storage array
-  piAmount       Int[]    @default([])
-  finalpis       Int[]    @default([])
-  baseprice      Float    @default(0.15)
-  piaddress      String?  // New field for Pi wallet address
-  istransaction  Boolean  @default(false)  // New field for transaction status
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  points         Int       @default(0)
+  level          Int       @default(1)
+  introSeen      Boolean   @default(false)
+  paymentMethod  String[]  @default([])  // Changed to array
+  paymentAddress String[]  @default([])  // Changed to array
+  isUpload       Boolean   @default(false)
+  imageUrl       String?
+  savedImages    String[]  @default([])
+  piAmount       Int[]     @default([])
+  finalpis       Int[]     @default([])
+  baseprice      Float     @default(0.15)
+  piaddress      String?
+  istransaction  Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 }
