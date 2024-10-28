@@ -23,6 +23,7 @@ model User {
   savedImages    String[] @default([])  // For permanent storage array
   piAmount       Int[]    @default([])
   finalpis       Int[]    @default([])
+  baseprice      Float    @default(0.15)
   piaddress      String?  // New field for Pi wallet address
   istransaction  Boolean  @default(false)  // New field for transaction status
   createdAt      DateTime @default(now())
