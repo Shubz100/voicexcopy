@@ -14,8 +14,6 @@ const PaymentProof = () => {
   const [piAddress, setPiAddress] = useState<string>('');
   const [hasStoredAddress, setHasStoredAddress] = useState<boolean>(false);
   const [isEditingAddress, setIsEditingAddress] = useState<boolean>(false);
-  const [previousAddresses, setPreviousAddresses] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -40,9 +38,8 @@ const PaymentProof = () => {
       const userData = await response.json();
       setImageUploaded(userData.isUpload || false);
       setImageUrl(userData.imageUrl || null);
-      if (userData.piaddress && userData.piaddress.length > 0) {
-        setPiAddress(userData.piaddress[userData.piaddress.length - 1]);
-        setPreviousAddresses(userData.piaddress);
+      if (userData.piaddress) {
+        setPiAddress(userData.piaddress);
         setHasStoredAddress(true);
       }
     } catch (error) {
@@ -109,46 +106,31 @@ const PaymentProof = () => {
   };
 
   const handleContinue = async () => {
-    if (!telegramId || !piAmount || !imageUrl || !piAddress) {
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/piamount', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegramId,
-          amount: piAmount,
-          imageUrl,
-          piaddress: piAddress
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save data');
-      }
-
-      const result = await response.json();
-      
-      if (result.success) {
-        if (result.piaddress) {
-          setPreviousAddresses(result.piaddress);
+    if (telegramId && piAmount && imageUrl) {
+      try {
+        const response = await fetch('/api/piamount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId,
+            amount: piAmount,
+            imageUrl: imageUrl,
+            piaddress: piAddress
+          })
+        });
+        
+        if (response.ok) {
           setHasStoredAddress(true);
+          setIsEditingAddress(false);
+          router.push('/summary');
         }
-        setIsEditingAddress(false);
-        // Use replace instead of push to avoid the back button issue
-        router.replace('./summary');
+      } catch (error) {
+        console.error('Error saving pi amount:', error);
       }
-    } catch (error) {
-      console.error('Error saving data:', error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const isButtonEnabled = Boolean(piAmount && imageUploaded && piAddress && !isLoading);
+  const isButtonEnabled = piAmount && imageUploaded && piAddress;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -286,7 +268,7 @@ const PaymentProof = () => {
                   ? 'bg-[#670773] hover:bg-[#7a1b86] transform hover:scale-105'
                   : 'bg-gray-400 cursor-not-allowed'}`}
             >
-              {isLoading ? 'Processing...' : 'Continue'}
+              Continue
             </button>
           </div>
         </div>
