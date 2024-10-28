@@ -32,12 +32,13 @@ const Profile = () => {
   });
 
   const levels: Level[] = [
-    { name: 'Rookie', threshold: 1000, pointsPerHundredXP: 1 },
-    { name: 'Bronze', threshold: 1200, pointsPerHundredXP: 3 },
-    { name: 'Silver', threshold: 1300, pointsPerHundredXP: 5 },
-    { name: 'Gold', threshold: 1400, pointsPerHundredXP: 7 },
-    { name: 'Diamond', threshold: 1500, pointsPerHundredXP: 10 },
-    { name: 'Platinum', threshold: 1600, pointsPerHundredXP: 15 }
+    { name: 'Rookie', threshold: 100, pointsPerHundredXP: 1 },
+    { name: 'Bronze', threshold: 101, pointsPerHundredXP: 3 },
+    { name: 'Silver', threshold: 300, pointsPerHundredXP: 5 },
+    { name: 'Gold', threshold: 700, pointsPerHundredXP: 7 },
+    { name: 'Diamond', threshold: 1100, pointsPerHundredXP: 10 },
+    { name: 'Platinum', threshold: 1500, pointsPerHundredXP: 15 },
+    { name: 'Infinite', threshold: Infinity, pointsPerHundredXP: 15 }
   ];
 
   useEffect(() => {
@@ -49,6 +50,22 @@ const Profile = () => {
       }
     }
   }, []);
+
+  const updateUserLevel = async (telegramId: number, level: number) => {
+    try {
+      await fetch('/api/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          id: telegramId,
+          level: level,
+          updateLevel: true
+        })
+      });
+    } catch (error) {
+      console.error('Error updating user level:', error);
+    }
+  };
 
   const fetchProfileData = async (telegramId: number) => {
     try {
@@ -63,6 +80,11 @@ const Profile = () => {
       const xp = totalPiSold;
       const currentLevel = getCurrentLevel(xp);
       const piPoints = calculatePiPoints(xp, currentLevel);
+
+      // Update the level in database if it's different
+      if (userData.level !== currentLevel) {
+        updateUserLevel(telegramId, currentLevel);
+      }
 
       setProfileData({
         finalpis: userData.finalpis,
