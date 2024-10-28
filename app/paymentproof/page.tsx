@@ -15,6 +15,7 @@ const PaymentProof = () => {
   const [hasStoredAddress, setHasStoredAddress] = useState<boolean>(false);
   const [isEditingAddress, setIsEditingAddress] = useState<boolean>(false);
   const [previousAddresses, setPreviousAddresses] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,35 +109,46 @@ const PaymentProof = () => {
   };
 
   const handleContinue = async () => {
-    if (telegramId && piAmount && imageUrl) {
-      try {
-        const response = await fetch('/api/piamount', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegramId,
-            amount: piAmount,
-            imageUrl: imageUrl,
-            piaddress: piAddress
-          })
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          if (data.piaddress) {
-            setPreviousAddresses(data.piaddress);
-            setHasStoredAddress(true);
-          }
-          setIsEditingAddress(false);
-          router.push('/summary');
-        }
-      } catch (error) {
-        console.error('Error saving pi amount:', error);
+    if (!telegramId || !piAmount || !imageUrl || !piAddress) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/piamount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId,
+          amount: piAmount,
+          imageUrl,
+          piaddress: piAddress
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save data');
       }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        if (result.piaddress) {
+          setPreviousAddresses(result.piaddress);
+          setHasStoredAddress(true);
+        }
+        setIsEditingAddress(false);
+        // Use replace instead of push to avoid the back button issue
+        router.replace('/summary');
+      }
+    } catch (error) {
+      console.error('Error saving data:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const isButtonEnabled = piAmount && imageUploaded && piAddress;
+  const isButtonEnabled = Boolean(piAmount && imageUploaded && piAddress && !isLoading);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -274,7 +286,7 @@ const PaymentProof = () => {
                   ? 'bg-[#670773] hover:bg-[#7a1b86] transform hover:scale-105'
                   : 'bg-gray-400 cursor-not-allowed'}`}
             >
-              Continue
+              {isLoading ? 'Processing...' : 'Continue'}
             </button>
           </div>
         </div>
