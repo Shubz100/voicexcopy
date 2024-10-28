@@ -16,7 +16,7 @@ interface UserData {
   piAmount: number[]
   paymentMethod: string
   paymentAddress: string
-  PiAddress: string
+  piaddress: string
 }
 
 export default function Summary() {
