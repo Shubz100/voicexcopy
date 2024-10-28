@@ -23,6 +23,7 @@ model User {
   piAmount       Int[]    @default([])
   finalpis       Int[]    @default([])
   piaddress      String?  // New field for Pi wallet address
+  istransaction  Boolean  @default(false)  // New field for transaction status
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
