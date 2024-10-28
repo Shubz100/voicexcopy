@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 const LEVELS = [
-    { name: 'Rookie', threshold: 1000, pointsPerHundredXP: 1 },
-    { name: 'Bronze', threshold: 1200, pointsPerHundredXP: 3 },
-    { name: 'Silver', threshold: 1300, pointsPerHundredXP: 5 },
-    { name: 'Gold', threshold: 1400, pointsPerHundredXP: 7 },
-    { name: 'Diamond', threshold: 1500, pointsPerHundredXP: 10 },
-    { name: 'Platinum', threshold: 1600, pointsPerHundredXP: 15 }
+    { name: 'Rookie', threshold: 100, pointsPerHundredXP: 1 },
+    { name: 'Bronze', threshold: 101, pointsPerHundredXP: 3 },
+    { name: 'Silver', threshold: 300, pointsPerHundredXP: 5 },
+    { name: 'Gold', threshold: 700, pointsPerHundredXP: 7 },
+    { name: 'Diamond', threshold: 1100, pointsPerHundredXP: 10 },
+    { name: 'Platinum', threshold: 1500, pointsPerHundredXP: 15 },
+    { name: 'Infinite', threshold: Infinity, pointsPerHundredXP: 15 }
 ];
 
 function calculateProfileMetrics(piAmountArray: number[]) {
@@ -51,7 +52,18 @@ export async function POST(req: NextRequest) {
                     telegramId: userData.id,
                     username: userData.username || '',
                     firstName: userData.first_name || '',
-                    lastName: userData.last_name || ''
+                    lastName: userData.last_name || '',
+                    level: 1 // Set default level for new users
+                }
+            })
+        }
+
+        // Handle level update if requested
+        if (userData.updateLevel) {
+            user = await prisma.user.update({
+                where: { telegramId: userData.id },
+                data: { 
+                    level: userData.level
                 }
             })
         }
