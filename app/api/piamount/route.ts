@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
                 },
                 piaddress: piaddress,  // Update the Pi address
                 imageUrl: null,     // Clear the temporary imageUrl
-                isUpload: false     // Reset upload status
+                isUpload: false,    // Reset upload status
+                istransaction: true // Set transaction status to true
             }
         })
 
@@ -40,7 +41,8 @@ export async function POST(req: NextRequest) {
             piAmount: updatedUser.piAmount,
             finalpis: updatedUser.finalpis,
             savedImages: updatedUser.savedImages,
-            piaddress: updatedUser.piaddress
+            piaddress: updatedUser.piaddress,
+            istransaction: updatedUser.istransaction
         })
     } catch (error) {
         console.error('Error updating pi amount:', error)
