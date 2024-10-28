@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { WebApp } from '@twa-dev/types'
 import Script from 'next/script'
+import Link from 'next/link'
 
 declare global {
   interface Window {
@@ -17,30 +18,6 @@ interface UserData {
   paymentMethod: string
   paymentAddress: string
   piaddress: string
-  baseprice: number
-  level: number
-}
-
-const getLevelBonus = (level: number): number => {
-  switch (level) {
-    case 1: return 0
-    case 2: return 0.01
-    case 3: return 0.03
-    case 4: return 0.05
-    case 5: return 0.07
-    case 6: return 0.10
-    default: return 0
-  }
-}
-
-const getPaymentMethodBonus = (method: string): number => {
-  switch (method?.toLowerCase()) {
-    case 'paypal': return 0.28
-    case 'google pay': return 0.25
-    case 'apple pay': return 0.15
-    case '2766': return 0
-    default: return 0
-  }
 }
 
 export default function Summary() {
@@ -101,10 +78,7 @@ export default function Summary() {
   }
 
   const latestPiAmount = userData?.piAmount[userData.piAmount.length - 1] || 0
-  const basePrice = userData?.baseprice || 0
-  const levelBonus = getLevelBonus(userData?.level || 1)
-  const paymentMethodBonus = getPaymentMethodBonus(userData?.paymentMethod || '')
-  const amountToReceive = latestPiAmount * (basePrice + levelBonus + paymentMethodBonus)
+  const amountToReceive = latestPiAmount * 0.65
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -174,6 +148,13 @@ export default function Summary() {
             You can check transaction status in menu &gt; Transaction History
           </p>
         </div>
+
+        {/* Back to Home Button */}
+        <Link href="/adminpannel">
+          <button className="bg-[#670773] text-white text-xl font-bold py-3 px-12 rounded-full mt-8 shadow-lg hover-scale animate-fade-in">
+            Back to Home
+          </button>
+        </Link>
       </div>
 
       <style jsx>{`
@@ -230,6 +211,15 @@ export default function Summary() {
         .animate-slide-up {
           animation: slide-up 0.5s ease-out forwards 0.6s;
           opacity: 0;
+        }
+        .hover-scale {
+          transition: transform 0.2s ease-out;
+        }
+        .hover-scale:hover {
+          transform: scale(1.05);
+        }
+        .hover-scale:active {
+          transform: scale(0.95);
         }
       `}</style>
     </div>
