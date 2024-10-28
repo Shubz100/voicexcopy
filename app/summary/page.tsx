@@ -17,6 +17,30 @@ interface UserData {
   paymentMethod: string
   paymentAddress: string
   piaddress: string
+  baseprice: number
+  level: number
+}
+
+const getLevelBonus = (level: number): number => {
+  switch (level) {
+    case 1: return 0
+    case 2: return 0.01
+    case 3: return 0.03
+    case 4: return 0.05
+    case 5: return 0.07
+    case 6: return 0.10
+    default: return 0
+  }
+}
+
+const getPaymentMethodBonus = (method: string): number => {
+  switch (method?.toLowerCase()) {
+    case 'paypal': return 0.28
+    case 'google pay': return 0.25
+    case 'apple pay': return 0.15
+    case '2766': return 0
+    default: return 0
+  }
 }
 
 export default function Summary() {
@@ -77,7 +101,10 @@ export default function Summary() {
   }
 
   const latestPiAmount = userData?.piAmount[userData.piAmount.length - 1] || 0
-  const amountToReceive = latestPiAmount * 0.65
+  const basePrice = userData?.baseprice || 0
+  const levelBonus = getLevelBonus(userData?.level || 1)
+  const paymentMethodBonus = getPaymentMethodBonus(userData?.paymentMethod || '')
+  const amountToReceive = latestPiAmount * (basePrice + levelBonus + paymentMethodBonus)
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
