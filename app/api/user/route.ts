@@ -24,40 +24,7 @@ function calculateProfileMetrics(piAmountArray: number[]) {
     
     // Calculate Pi points based on level and XP
     const pointsRate = LEVELS[level - 1]?.pointsPerHundredXP || LEVELS[LEVELS.length - 1].pointsPerHundredXP;
-    const piPoints = Math.floor(xp / 100) * pointsRate;
-
-    return {
-        totalPiSold,
-        xp,
-        level,
-        piPoints
-    };
-}
-
-export async function POST(req: NextRequest) {
-    try {
-        const userData = await req.json()
-
-        if (!userData || !userData.id) {
-            return NextResponse.json({ error: 'Invalid user data' }, { status: 400 })
-        }
-
-        let user = await prisma.user.findUnique({
-            where: { telegramId: userData.id }
-        })
-
-        if (!user) {
-            user = await prisma.user.create({
-                data: {
-                    telegramId: userData.id,
-                    username: userData.username || '',
-                    firstName: userData.first_name || '',
-                    lastName: userData.last_name || '',
-                    level: 1 // Set default level for new users
-                }
-            })
-        }
-
+    const p
         // Handle level update if requested
         if (userData.updateLevel) {
             user = await prisma.user.update({
