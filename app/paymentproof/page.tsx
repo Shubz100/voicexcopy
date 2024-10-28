@@ -13,8 +13,8 @@ const PaymentProof = () => {
   const [telegramId, setTelegramId] = useState<number | null>(null);
   const [piAddress, setPiAddress] = useState<string>('');
   const [hasStoredAddress, setHasStoredAddress] = useState<boolean>(false);
-  const [previousAddresses, setPreviousAddresses] = useState<string[]>([]);
   const [isEditingAddress, setIsEditingAddress] = useState<boolean>(false);
+  const [previousAddresses, setPreviousAddresses] = useState<string[]>([]);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
