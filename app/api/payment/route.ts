@@ -9,11 +9,19 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid telegramId' }, { status: 400 })
         }
 
+        const user = await prisma.user.findUnique({
+            where: { telegramId }
+        })
+
         const updatedUser = await prisma.user.update({
             where: { telegramId },
             data: {
-                paymentMethod,
-                paymentAddress
+                paymentMethod: {
+                    push: paymentMethod
+                },
+                paymentAddress: {
+                    push: paymentAddress
+                }
             }
         })
 
@@ -39,8 +47,8 @@ export async function DELETE(req: NextRequest) {
         const updatedUser = await prisma.user.update({
             where: { telegramId },
             data: {
-                paymentMethod: null,
-                paymentAddress: null
+                paymentMethod: [],
+                paymentAddress: []
             }
         })
 
