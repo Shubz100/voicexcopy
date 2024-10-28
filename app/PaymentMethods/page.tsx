@@ -22,6 +22,10 @@ const PaymentOptions: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [telegramId, setTelegramId] = useState<number | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [paymentHistory, setPaymentHistory] = useState<{
+    methods: string[];
+    addresses: string[];
+  }>({ methods: [], addresses: [] });
 
   const paymentMethods: PaymentMethod[] = [
     {
@@ -72,16 +76,21 @@ const PaymentOptions: React.FC = () => {
       });
       const userData = await response.json();
       
-      if (userData.paymentMethod && userData.paymentAddress) {
-        setSelectedPayment(userData.paymentMethod);
-        setPaymentAddress(userData.paymentAddress);
+      if (userData.paymentMethod?.length > 0 && userData.paymentAddress?.length > 0) {
+        setPaymentHistory({
+          methods: userData.paymentMethod,
+          addresses: userData.paymentAddress
+        });
+        // Set the most recent payment method and address
+        setSelectedPayment(userData.paymentMethod[userData.paymentMethod.length - 1]);
+        setPaymentAddress(userData.paymentAddress[userData.paymentAddress.length - 1]);
         setIsConnected(true);
       }
     } catch (error) {
       console.error('Error fetching payment data:', error);
     }
   };
-
+  
   const handleBack = () => {
     router.push('/');
   };
@@ -116,6 +125,10 @@ const PaymentOptions: React.FC = () => {
         });
         const data = await response.json();
         if (data.success) {
+          setPaymentHistory({
+            methods: [...paymentHistory.methods, selectedPayment!],
+            addresses: [...paymentHistory.addresses, paymentAddress]
+          });
           setIsConnected(true);
         }
       } else {
@@ -130,6 +143,7 @@ const PaymentOptions: React.FC = () => {
           setSelectedPayment(null);
           setPaymentAddress('');
           setVisibleInput(null);
+          setPaymentHistory({ methods: [], addresses: [] });
         }
       }
     } catch (error) {
