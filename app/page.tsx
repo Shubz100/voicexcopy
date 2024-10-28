@@ -30,7 +30,7 @@ export default function Home() {
       window.location.href = '/'
     } else if (item === 'Transaction History') {
       // Add your transaction history route here
-      // window.location.href = './transaction-history'
+      window.location.href = './transaction-history'
     } else if (item === 'Profile') {
       window.location.href = './profile'
     } else if (item === 'Admin') {
