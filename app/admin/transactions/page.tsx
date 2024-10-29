@@ -154,7 +154,7 @@ export default function AdminTransactions() {
   const statusCounts: { [key: string]: number } = Object.keys(groupedTransactions).reduce((acc, status) => {
     acc[status] = groupedTransactions[status].length
     return acc
-  }, {})
+  }, {});
 
   return (
     <div className="container">
