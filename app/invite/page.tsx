@@ -1,13 +1,23 @@
-'use client';
+'use client'
 
 import React, { useState, useEffect, useRef } from 'react';
 import { prisma } from '@/lib/prisma';
 import { WebApp } from '@twa-dev/types';
 
 interface User {
-  telegramId: string;
+  id: string;
+  telegramId: number;
+  username?: string;
+  invitedUsers: string[];
   invitedBy?: string;
-  invitedUsers?: string[];
+  points: number;
+  totalPoints: number;
+  invitePoints: number;
+}
+
+interface InviterInfo {
+  totalPoints: number;
+  invitePoints: number;
 }
 
 interface InvitedUser {
@@ -20,17 +30,17 @@ declare global {
   interface Window {
     Telegram?: {
       WebApp: WebApp;
-    };
+    }
   }
 }
 
 const InvitePage = () => {
   const [user, setUser] = useState<User | null>(null);
-  const [inviterInfo, setInviterInfo] = useState<any>(null);
+  const [inviterInfo, setInviterInfo] = useState<InviterInfo | null>(null);
   const [inviteLink, setInviteLink] = useState('');
   const [invitedUsers, setInvitedUsers] = useState<InvitedUser[]>([]);
   const [isCopied, setIsCopied] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval>>();
+  const intervalRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
@@ -69,7 +79,7 @@ const InvitePage = () => {
       intervalRef.current = setInterval(async () => {
         try {
           const invitedUsersData = await Promise.all(
-            (invitedUsers || []).map(async (invitedUser) => {
+            invitedUsers.map(async (invitedUser) => {
               const userData = await prisma.user.findUnique({
                 where: { username: invitedUser.username },
                 select: { totalPoints: true, invitePoints: true },
@@ -93,15 +103,14 @@ const InvitePage = () => {
         }
       };
     }
-  }, [invitedUsers]);
+  }, []);
 
   const handleInvite = async () => {
     try {
       await navigator.clipboard.writeText(inviteLink);
       setIsCopied(true);
 
-      // Increase points for the user
-      if (user) {
+      if (user?.telegramId) {
         await prisma.user.update({
           where: { telegramId: user.telegramId },
           data: {
@@ -127,7 +136,9 @@ const InvitePage = () => {
       <button onClick={handleInvite}>
         {isCopied ? 'Invite link copied!' : 'Copy Invite Link'}
       </button>
-      {user?.invitedBy && <p>Invited by: {user.invitedBy}</p>}
+      {user?.invitedBy && (
+        <p>Invited by: {user.invitedBy}</p>
+      )}
       {inviterInfo && (
         <div>
           <h2>Inviter's Total Points: {inviterInfo.totalPoints}</h2>
