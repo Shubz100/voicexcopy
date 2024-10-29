@@ -4,420 +4,266 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 
 interface User {
-  telegramId: number
-  username: string
-  piAmount: number[]
-  transactionStatus: string[]
-  paymentMethod: string[]
-  paymentAddress: string[]
+    telegramId: number
+    username: string
+    piAmount: number[]
+    transactionStatus: string[]
+    paymentMethod: string[]
+    paymentAddress: string[]
 }
 
 export default function AdminTransactions() {
-  const [users, setUsers] = useState<User[]>([])
-  const [adminKey, setAdminKey] = useState('')
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
-  const router = useRouter()
+    const [users, setUsers] = useState<User[]>([])
+    const [adminKey, setAdminKey] = useState('')
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
+    const [activeTab, setActiveTab] = useState('pending')
+    const router = useRouter()
 
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError('')
+    async function handleLogin(e: React.FormEvent) {
+        e.preventDefault()
+        setLoading(true)
+        setError('')
 
-    try {
-      const response = await fetch('/api/admin/users', {
-        headers: {
-          'Authorization': `Bearer ${adminKey}`
-        }
-      })
-      const data = await response.json()
-      
-      if (data.error) {
-        setError(data.error)
-      } else {
-        setUsers(data.users)
-        setIsAuthenticated(true)
-      }
-    } catch (err) {
-      setError('Authentication failed. Please check your admin key.')
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  async function updateStatus(telegramId: number, transactionIndex: number, newStatus: string) {
-    try {
-      const response = await fetch('/api/admin/update-status', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminKey}`
-        },
-        body: JSON.stringify({
-          telegramId,
-          transactionIndex,
-          newStatus
-        })
-      })
-
-      const data = await response.json()
-      if (data.error) {
-        setError(data.error)
-      } else {
-        // Update the local state with the new status
-        setUsers(prevUsers => {
-          return prevUsers.map(user => {
-            if (user.telegramId === telegramId) {
-              const newTransactionStatus = [...user.transactionStatus]
-              newTransactionStatus[transactionIndex] = newStatus
-              return { ...user, transactionStatus: newTransactionStatus }
+        try {
+            const response = await fetch('/api/admin/users', {
+                headers: {
+                    'Authorization': `Bearer ${adminKey}`
+                }
+            })
+            const data = await response.json()
+            
+            if (data.error) {
+                setError(data.error)
+            } else {
+                setUsers(data.users)
+                setIsAuthenticated(true)
             }
-            return user
-          })
-        })
-        showToast('Transaction status updated successfully.', 'success')
-      }
-    } catch (err) {
-      setError('Failed to update status')
-      showToast('Failed to update transaction status.', 'error')
+        } catch (err) {
+            setError('Authentication failed. Please check your admin key.')
+        } finally {
+            setLoading(false)
+        }
     }
-  }
 
-  function showToast(message: string, type: 'success' | 'error') {
-    const toastElement = document.createElement('div')
-    toastElement.classList.add('toast', type)
-    toastElement.textContent = message
-    document.body.appendChild(toastElement)
+    async function updateStatus(telegramId: number, transactionIndex: number, newStatus: string) {
+        try {
+            const response = await fetch('/api/admin/update-status', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${adminKey}`  // Include the adminKey in the headers
+                },
+                body: JSON.stringify({
+                    telegramId,
+                    transactionIndex,
+                    newStatus,
+                })
+            })
 
-    setTimeout(() => {
-      toastElement.classList.add('fade-out')
-      setTimeout(() => {
-        toastElement.remove()
-      }, 300)
-    }, 3000)
-  }
+            const data = await response.json()
+            if (data.error) {
+                setError(data.error)
+            } else {
+                // Update the local state with the new status
+                setUsers(prevUsers => {
+                    return prevUsers.map(user => {
+                        if (user.telegramId === telegramId) {
+                            const newTransactionStatus = [...user.transactionStatus]
+                            newTransactionStatus[transactionIndex] = newStatus
+                            return { ...user, transactionStatus: newTransactionStatus }
+                        }
+                        return user
+                    })
+                })
+            }
+        } catch (err) {
+            setError('Failed to update status')
+        }
+    }
 
-  if (!isAuthenticated) {
-    return (
-      <div className="login-container">
-        <div className="login-card">
-          <h1>Admin Authentication</h1>
-          <form onSubmit={handleLogin}>
-            <div className="form-group">
-              <input
-                type="password"
-                placeholder="Enter Admin Key"
-                value={adminKey}
-                onChange={(e) => setAdminKey(e.target.value)}
-                disabled={loading}
-              />
+    if (!isAuthenticated) {
+        return (
+            <div className="login-container">
+                {/* Login form */}
             </div>
-            
-            {error && (
-              <div className="error-message">
-                {error}
-              </div>
-            )}
-            
-            <button 
-              type="submit" 
-              className="login-button"
-              disabled={loading}
-            >
-              {loading ? 'Authenticating...' : 'Login'}
-            </button>
-          </form>
-        </div>
-      </div>
-    )
-  }
-
-  // Group transactions by status
-  const groupedTransactions: { [key: string]: User[] } = users.reduce((acc, user) => {
-  user.transactionStatus.forEach((status, index) => {
-    if (!acc[status]) {
-      acc[status] = []
+        )
     }
-    acc[status].push({
-      telegramId: user.telegramId,
-      username: user.username,
-      piAmount: [user.piAmount[index]],
-      transactionStatus: [status],
-      paymentMethod: [user.paymentMethod[index]],
-      paymentAddress: [user.paymentAddress[index]],
-    })
-  })
-  return acc
-}, {} as { [key: string]: User[] })
 
-  const statusCounts: { [key: string]: number } = Object.keys(groupedTransactions).reduce(
-  (acc: { [key: string]: number }, status: string) => {
-    acc[status] = groupedTransactions[status].length
-    return acc
-  },
-  {}
-)
+    const pendingTransactions = users.filter(user => user.transactionStatus.some(status => status === 'processing'))
+    const completedTransactions = users.filter(user => user.transactionStatus.some(status => status === 'completed'))
+    const failedTransactions = users.filter(user => user.transactionStatus.some(status => status === 'failed'))
 
-  return (
-    <div className="container">
-      <div className="header">
-        <h1>Transaction Management</h1>
-        <button 
-          className="logout-button"
-          onClick={() => {
-            setIsAuthenticated(false)
-            setAdminKey('')
-            setUsers([])
-          }}
-        >
-          Logout
-        </button>
-      </div>
+    return (
+        <div className="container">
+            <div className="header">
+                <h1>Transaction Management</h1>
+                <button 
+                    className="logout-button"
+                    onClick={() => {
+                        setIsAuthenticated(false)
+                        setAdminKey('')
+                        setUsers([])
+                    }}
+                >
+                    Logout
+                </button>
+            </div>
 
-      {error && (
-        <div className="error-message">
-          {error}
-        </div>
-      )}
-
-      <div className="tabs">
-        {['Pending', 'Completed', 'Failed'].map((status) => (
-          <div
-            key={status}
-            className={`tab ${groupedTransactions[status]?.length ? 'active' : ''}`}
-          >
-            <span>{status}</span>
-            <span className="tab-count">{statusCounts[status] || 0}</span>
-          </div>
-        ))}
-      </div>
-
-      <div className="transactions-grid">
-        {['Pending', 'Completed', 'Failed'].map((status) => (
-          <div key={status} className="transaction-section">
-            <h2>{status} Transactions</h2>
-            {groupedTransactions[status]?.map((user, index) => (
-              <div key={`${user.telegramId}-${index}`} className="user-card">
-                <h3>
-                  {user.username ? `@${user.username}` : `User ${user.telegramId}`}
-                </h3>
-                <div className="transaction-item">
-                  <div className="transaction-details">
-                    <p><strong>Transaction #{index + 1}</strong></p>
-                    <p><strong>Amount:</strong> {user.piAmount[0]} Pi</p>
-                    <p><strong>Payment Method:</strong> {user.paymentMethod[0]}</p>
-                    <p><strong>Payment Address:</strong> {user.paymentAddress[0]}</p>
-                    <button
-                      className="copy-button"
-                      onClick={() => copyToClipboard(user.paymentAddress[0])}
-                    >
-                      <i className="fas fa-copy"></i>
-                    </button>
-                  </div>
-                  <div className="status-selector">
-                    <select
-                      value={user.transactionStatus[0]}
-                      onChange={(e) => updateStatus(user.telegramId, 0, e.target.value)}
-                      className={user.transactionStatus[0]}
-                    >
-                      <option value="processing">Processing</option>
-                      <option value="completed">Completed</option>
-                      <option value="failed">Failed</option>
-                    </select>
-                  </div>
+            {error && (
+                <div className="error-message">
+                    {error}
                 </div>
-              </div>
-            ))}
-          </div>
-        ))}
-      </div>
+            )}
 
-      <style jsx>{`
-        .container {
-          padding: 20px;
-          max-width: 1200px;
-          margin: 0 auto;
-          font-family: Arial, sans-serif;
-        }
+            <div className="tabs">
+                <button
+                    className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('pending')}
+                >
+                    Pending ({pendingTransactions.length})
+                </button>
+                <button
+                    className={`tab-button ${activeTab === 'completed' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('completed')}
+                >
+                    Completed ({completedTransactions.length})
+                </button>
+                <button
+                    className={`tab-button ${activeTab === 'failed' ? 'active' : ''}`}
+                    onClick={() => setActiveTab('failed')}
+                >
+                    Failed ({failedTransactions.length})
+                </button>
+            </div>
 
-        .header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-
-        .header h1 {
-          font-size: 24px;
-          font-weight: bold;
-          color: #333;
-        }
-
-        .logout-button {
-          padding: 8px 16px;
-          background-color: #dc3545;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          cursor: pointer;
-          font-size: 14px;
-        }
-
-        .error-message {
-          background-color: #fff3f3;
-          color: #dc3545;
-          padding: 10px;
-          border-radius: 4px;
-          margin-bottom: 20px;
-          border: 1px solid #dc3545;
-          font-size: 14px;
-        }
-
-        .tabs {
-          display: flex;
-          justify-content: center;
-          margin-bottom: 20px;
-        }
-
-        .tab {
-          background-color: #f0f0f0;
-          padding: 10px 20px;
-          border-radius: 4px;
-          cursor: pointer;
-          margin: 0 5px;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-weight: bold;
-          color: #333;
-          font-size: 14px;
-        }
-
-        .tab.active {
-          background-color: #4d4d4d;
-          color: white;
-        }
-
-        .tab-count {
-          background-color: #d6d6d6;
-          padding: 2px 8px;
-          border-radius: 4px;
-          font-size: 12px;
-          margin-left: 8px;
-        }
-
-        .transactions-grid {
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-          gap: 20px;
-        }
-
-        .transaction-section {
-          background: white;
-          padding: 20px;
-          border-radius: 8px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-        }
-
-        .transaction-section h2 {
-          margin-bottom: 15px;
-          color: #333;
-          font-size: 18px;
-        }
-
-        .user-card {
-          background-color: #f0f0f0;
-          padding: 15px;
-          border-radius: 4px;
-          margin-bottom: 15px;
-        }
-
-        .user-card h3 {
-          margin-bottom: 10px;
-          color: #333;
-          font-size: 16px;
-        }
-
-        .transaction-item {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          background-color: white;
-          padding: 15px;
-          border-radius: 4px;
-          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-          font-size: 14px;
-        }
-
-        .transaction-details {
-          flex: 1;
-          margin-right: 20px;
-        }
-
-        .transaction-details p {
-          margin: 5px 0;
-        }
-
-        .status-selector select {
-          width: 150px;
-          padding: 8px;
-          border-radius: 4px;
-          border: 1px solid #ddd;
-          font-size: 14px;
-        }
-
-        .status-selector select.processing {
-          background-color: #fff3cd;
-        }
-
-        .status-selector select.completed {
-          background-color: #d4edda;
-        }
-
-        .status-selector select.failed {
-          background-color: #f8d7da;
-        }
-
-        .copy-button {
-          background-color: #4d4d4d;
-          color: white;
-          border: none;
-          border-radius: 4px;
-          padding: 4px 8px;
-          cursor: pointer;
-          font-size: 14px;
-        }
-
-        @media (max-width: 768px) {
-          .container {
-            padding: 10px;
-          }
-
-          .header {
-            flex-direction: column;
-            gap: 10px;
-            text-align: center;
-          }
-
-          .transaction-item {
-            padding: 10px;
-          }
-
-          .transaction-details {
-            margin-right: 10px;
-          }
-
-          .status-selector select {
-            width: 120px;
-          }
-        }
-      `}</style>
-    </div>
-  )
-
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text)
-    showToast('Payment address copied to clipboard', 'success')
-  }
+            <div className="transactions-grid">
+                {activeTab === 'pending' && pendingTransactions.map((user) => (
+                    <UserCard key={user.telegramId} user={user} onUpdateStatus={updateStatus} />
+                ))}
+                {activeTab === 'completed' && completedTransactions.map((user) => (
+                    <UserCard key={user.telegramId} user={user} onUpdateStatus={updateStatus} />
+                ))}
+                {activeTab === 'failed' && failedTransactions.map((user) => (
+                    <UserCard key={user.telegramId} user={user} onUpdateStatus={updateStatus} />
+                ))}
+            </div>
+        </div>
+    )
 }
+
+interface UserCardProps {
+    user: User
+    onUpdateStatus: (telegramId: number, transactionIndex: number, newStatus: string) => void
+}
+
+const UserCard = ({ user, onUpdateStatus }: UserCardProps) => {
+    return (
+        <div className="user-card">
+            <h2>
+                {user.username ? `@${user.username}` : `User ${user.telegramId}`}
+            </h2>
+            
+            {user.piAmount.map((amount, index) => (
+                <div key={index} className="transaction-item">
+                    <div className="transaction-details">
+                        <p><strong>Transaction #{index + 1}</strong></p>
+                        <p><strong>Amount:</strong> {amount} Pi</p>
+                        <p><strong>Payment Method:</strong> {user.paymentMethod[index]}</p>
+                        <p><strong>Payment Address:</strong> {user.paymentAddress[index]}</p>
+                    </div>
+                    <div className="status-selector">
+                        <select
+                            value={user.transactionStatus[index]}
+                            onChange={(e) => onUpdateStatus(user.telegramId, index, e.target.value)}
+                            className={user.transactionStatus[index]}
+                        >
+                            <option value="processing">Processing</option>
+                            <option value="completed">Completed</option>
+                            <option value="failed">Failed</option>
+                        </select>
+                    </div>
+                </div>
+            ))}
+        </div>
+    )
+}
+
+const LoadingIndicator = () => {
+    return (
+        <div className="loading-container">
+            <div className="loading-spinner"></div>
+        </div>
+    )
+}
+
+const ErrorMessage = ({ message }: { message: string }) => {
+    return (
+        <div className="error-message">
+            {message}
+        </div>
+    )
+}
+
+<style jsx>{`
+    /* ... existing styles ... */
+
+    .tabs {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .tab-button {
+        padding: 10px 20px;
+        background-color: #f8f9fa;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: background-color 0.3s;
+    }
+
+    .tab-button.active {
+        background-color: #670773;
+        color: white;
+    }
+
+    .tab-button:hover:not(.active) {
+        background-color: #e9ecef;
+    }
+
+    .loading-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 200px;
+    }
+
+    .loading-spinner {
+        border: 4px solid rgba(103, 7, 115, 0.1);
+        border-left-color: #670773;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    @media (max-width: 768px) {
+        .tabs {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .tab-button {
+            flex-grow: 1;
+        }
+    }
+`}</style>
