@@ -141,37 +141,47 @@ const MergedPaymentPage = () => {
   };
 
   const handleContinue = async () => {
-    if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
-      try {
-        // Save payment method data
-        await fetch('/api/payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegramId,
-            paymentMethod: selectedPayment,
-            paymentAddress
-          })
-        });
+  if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
+    try {
+      // Update transaction status to processing
+      await fetch('/api/user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          id: telegramId,
+          newTransaction: true  // This flag tells the API to add 'processing' status
+        })
+      });
 
-        // Save Pi amount and address
-        await fetch('/api/piamount', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegramId,
-            amount: piAmount,
-            imageUrl: imageUrl,
-            piaddress: piAddress
-          })
-        });
-        
-        router.push('/summary');
-      } catch (error) {
-        console.error('Error saving data:', error);
-      }
+      // Save payment method data
+      await fetch('/api/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId,
+          paymentMethod: selectedPayment,
+          paymentAddress
+        })
+      });
+
+      // Save Pi amount and address
+      await fetch('/api/piamount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId,
+          amount: piAmount,
+          imageUrl: imageUrl,
+          piaddress: piAddress
+        })
+      });
+      
+      router.push('/summary');
+    } catch (error) {
+      console.error('Error saving data:', error);
     }
-  };
+  }
+};
 
   const isButtonEnabled = piAmount && imageUploaded && piAddress && selectedPayment && paymentAddress;
 
