@@ -1,73 +1,99 @@
-'use client'
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import { prisma } from '@/lib/prisma';
+import { WebApp } from '@twa-dev/types';
+
+interface User {
+  telegramId: string;
+  invitedBy?: string;
+  invitedUsers?: string[];
+}
+
+interface InvitedUser {
+  username: string;
+  totalPoints: number;
+  invitePoints: number;
+}
+
+declare global {
+  interface Window {
+    Telegram?: {
+      WebApp: WebApp;
+    };
+  }
+}
 
 const InvitePage = () => {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [inviterInfo, setInviterInfo] = useState<any>(null);
   const [inviteLink, setInviteLink] = useState('');
-  const [invitedUsers, setInvitedUsers] = useState<{ username: string; totalPoints: number; invitePoints: number }[]>([]);
+  const [invitedUsers, setInvitedUsers] = useState<InvitedUser[]>([]);
   const [isCopied, setIsCopied] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval>>();
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const userData = await fetch('/api/invite', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ id: Telegram?.WebApp?.initDataUnsafe?.user?.id }),
-        }).then((res) => res.json());
+    if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+      const tg = window.Telegram.WebApp;
+      tg.ready();
 
-        if (userData.user) {
-          setUser(userData.user);
-          setInviterInfo(userData.inviterInfo);
-          setInviteLink(`http://t.me/pixel_dogs_bot/Pixel_dogs_web/start?startapp=${userData.user.telegramId}`);
-          setInvitedUsers(
-            (userData.user.invitedUsers || []).map((username: string) => ({
-              username,
-              totalPoints: 0,
-              invitePoints: 0,
-            }))
-          );
+      const fetchUserData = async () => {
+        try {
+          const userData = await fetch('/api/invite', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ id: tg.initDataUnsafe?.user?.id }),
+          }).then((res) => res.json());
+
+          if (userData.user) {
+            setUser(userData.user);
+            setInviterInfo(userData.inviterInfo);
+            setInviteLink(`http://t.me/pixel_dogs_bot/Pixel_dogs_web/start?startapp=${userData.user.telegramId}`);
+            setInvitedUsers(
+              (userData.user.invitedUsers || []).map((username: string) => ({
+                username,
+                totalPoints: 0,
+                invitePoints: 0,
+              }))
+            );
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
         }
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-      }
-    };
+      };
 
-    fetchUserData();
+      fetchUserData();
 
-    intervalRef.current = setInterval(async () => {
-      try {
-        const invitedUsersData = await Promise.all(
-          (invitedUsers || []).map(async (invitedUser) => {
-            const userData = await prisma.user.findUnique({
-              where: { username: invitedUser.username },
-              select: { totalPoints: true, invitePoints: true },
-            });
-            return {
-              ...invitedUser,
-              totalPoints: userData?.totalPoints || 0,
-              invitePoints: userData?.invitePoints || 0,
-            };
-          })
-        );
-        setInvitedUsers(invitedUsersData);
-      } catch (error) {
-        console.error('Error fetching invited users data:', error);
-      }
-    }, 1200000); // 20 minutes
+      intervalRef.current = setInterval(async () => {
+        try {
+          const invitedUsersData = await Promise.all(
+            (invitedUsers || []).map(async (invitedUser) => {
+              const userData = await prisma.user.findUnique({
+                where: { username: invitedUser.username },
+                select: { totalPoints: true, invitePoints: true },
+              });
+              return {
+                ...invitedUser,
+                totalPoints: userData?.totalPoints || 0,
+                invitePoints: userData?.invitePoints || 0,
+              };
+            })
+          );
+          setInvitedUsers(invitedUsersData);
+        } catch (error) {
+          console.error('Error fetching invited users data:', error);
+        }
+      }, 1200000); // 20 minutes
 
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
-    };
-  }, []);
+      return () => {
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+        }
+      };
+    }
+  }, [invitedUsers]);
 
   const handleInvite = async () => {
     try {
@@ -75,14 +101,16 @@ const InvitePage = () => {
       setIsCopied(true);
 
       // Increase points for the user
-      await prisma.user.update({
-        where: { telegramId: user.telegramId },
-        data: {
-          points: {
-            increment: 2500,
+      if (user) {
+        await prisma.user.update({
+          where: { telegramId: user.telegramId },
+          data: {
+            points: {
+              increment: 2500,
+            },
           },
-        },
-      });
+        });
+      }
 
       setTimeout(() => {
         setIsCopied(false);
@@ -99,9 +127,7 @@ const InvitePage = () => {
       <button onClick={handleInvite}>
         {isCopied ? 'Invite link copied!' : 'Copy Invite Link'}
       </button>
-      {user?.invitedBy && (
-        <p>Invited by: {user.invitedBy}</p>
-      )}
+      {user?.invitedBy && <p>Invited by: {user.invitedBy}</p>}
       {inviterInfo && (
         <div>
           <h2>Inviter's Total Points: {inviterInfo.totalPoints}</h2>
