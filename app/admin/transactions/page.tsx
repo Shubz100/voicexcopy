@@ -15,15 +15,16 @@ interface User {
 export default function AdminTransactions() {
     const [users, setUsers] = useState<User[]>([])
     const [adminKey, setAdminKey] = useState('')
-    const [loading, setLoading] = useState(true)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const router = useRouter()
 
-    useEffect(() => {
-        fetchUsers()
-    }, [])
+    async function handleLogin(e: React.FormEvent) {
+        e.preventDefault()
+        setLoading(true)
+        setError('')
 
-    async function fetchUsers() {
         try {
             const response = await fetch('/api/admin/users', {
                 headers: {
@@ -31,13 +32,15 @@ export default function AdminTransactions() {
                 }
             })
             const data = await response.json()
+            
             if (data.error) {
                 setError(data.error)
             } else {
                 setUsers(data.users)
+                setIsAuthenticated(true)
             }
         } catch (err) {
-            setError('Failed to fetch users')
+            setError('Authentication failed. Please check your admin key.')
         } finally {
             setLoading(false)
         }
@@ -48,13 +51,13 @@ export default function AdminTransactions() {
             const response = await fetch('/api/admin/update-status', {
                 method: 'POST',
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${adminKey}`
                 },
                 body: JSON.stringify({
                     telegramId,
                     transactionIndex,
-                    newStatus,
-                    adminKey
+                    newStatus
                 })
             })
 
@@ -62,58 +65,99 @@ export default function AdminTransactions() {
             if (data.error) {
                 setError(data.error)
             } else {
-                // Refresh the users list
-                await fetchUsers()
+                setUsers(prevUsers => {
+                    return prevUsers.map(user => {
+                        if (user.telegramId === telegramId) {
+                            const newTransactionStatus = [...user.transactionStatus]
+                            newTransactionStatus[transactionIndex] = newStatus
+                            return { ...user, transactionStatus: newTransactionStatus }
+                        }
+                        return user
+                    })
+                })
             }
         } catch (err) {
             setError('Failed to update status')
         }
     }
 
-    if (loading) {
-        return <div className="flex justify-center items-center h-screen">Loading...</div>
+    if (!isAuthenticated) {
+        return (
+            <div className="login-container">
+                <div className="login-card">
+                    <h1>Admin Authentication</h1>
+                    <form onSubmit={handleLogin}>
+                        <div className="form-group">
+                            <input
+                                type="password"
+                                placeholder="Enter Admin Key"
+                                value={adminKey}
+                                onChange={(e) => setAdminKey(e.target.value)}
+                                disabled={loading}
+                            />
+                        </div>
+                        
+                        {error && (
+                            <div className="error-message">
+                                {error}
+                            </div>
+                        )}
+                        
+                        <button 
+                            type="submit" 
+                            className="login-button"
+                            disabled={loading}
+                        >
+                            {loading ? 'Authenticating...' : 'Login'}
+                        </button>
+                    </form>
+                </div>
+            </div>
+        )
     }
 
     return (
-        <div className="container mx-auto p-4">
-            <div className="mb-4">
-                <input
-                    type="password"
-                    placeholder="Admin Key"
-                    value={adminKey}
-                    onChange={(e) => setAdminKey(e.target.value)}
-                    className="border p-2 rounded"
-                />
+        <div className="container">
+            <div className="header">
+                <h1>Transaction Management</h1>
+                <button 
+                    className="logout-button"
+                    onClick={() => {
+                        setIsAuthenticated(false)
+                        setAdminKey('')
+                        setUsers([])
+                    }}
+                >
+                    Logout
+                </button>
             </div>
 
             {error && (
-                <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                <div className="error-message">
                     {error}
                 </div>
             )}
 
-            <div className="grid gap-4">
+            <div className="transactions-grid">
                 {users.map((user) => (
-                    <div key={user.telegramId} className="border rounded p-4">
-                        <h2 className="text-xl font-bold mb-2">
+                    <div key={user.telegramId} className="user-card">
+                        <h2>
                             {user.username ? `@${user.username}` : `User ${user.telegramId}`}
                         </h2>
                         
                         {user.piAmount.map((amount, index) => (
-                            <div key={index} className="mb-4 p-2 bg-gray-50 rounded">
-                                <p>Transaction #{index + 1}</p>
-                                <p>Amount: {amount} Pi</p>
-                                <p>Payment Method: {user.paymentMethod[index]}</p>
-                                <p>Payment Address: {user.paymentAddress[index]}</p>
-                                <div className="mt-2">
+                            <div key={index} className="transaction-item">
+                                <div className="transaction-details">
+                                    <p><strong>Transaction #{index + 1}</strong></p>
+                                    <p><strong>Amount:</strong> {amount} Pi</p>
+                                    <p><strong>Payment Method:</strong> {user.paymentMethod[index]}</p>
+                                    <p><strong>Payment Address:</strong> {user.paymentAddress[index]}</p>
+                                </div>
+                                <div className="status-selector">
                                     <select
                                         value={user.transactionStatus[index]}
                                         onChange={(e) => updateStatus(user.telegramId, index, e.target.value)}
-                                        className={`p-2 rounded ${
-                                            user.transactionStatus[index] === 'processing' ? 'bg-yellow-100' :
-                                            user.transactionStatus[index] === 'completed' ? 'bg-green-100' :
-                                            user.transactionStatus[index] === 'failed' ? 'bg-red-100' : ''
-                                        }`}
+                                        className={user.transactionStatus[index]}
                                     >
                                         <option value="processing">Processing</option>
                                         <option value="completed">Completed</option>
@@ -125,6 +169,159 @@ export default function AdminTransactions() {
                     </div>
                 ))}
             </div>
+
+            <style jsx>{`
+                .login-container {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    background-color: #f5f5f5;
+                    padding: 20px;
+                }
+
+                .login-card {
+                    background: white;
+                    padding: 30px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                    width: 100%;
+                    max-width: 400px;
+                }
+
+                .login-card h1 {
+                    text-align: center;
+                    margin-bottom: 20px;
+                    color: #333;
+                }
+
+                .form-group {
+                    margin-bottom: 15px;
+                }
+
+                input {
+                    width: 100%;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    font-size: 16px;
+                }
+
+                .login-button {
+                    width: 100%;
+                    padding: 12px;
+                    background-color: #007bff;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    font-size: 16px;
+                }
+
+                .login-button:disabled {
+                    background-color: #ccc;
+                    cursor: not-allowed;
+                }
+
+                .container {
+                    padding: 20px;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                }
+
+                .header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+
+                .logout-button {
+                    padding: 8px 16px;
+                    background-color: #dc3545;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+
+                .error-message {
+                    background-color: #fff3f3;
+                    color: #dc3545;
+                    padding: 10px;
+                    border-radius: 4px;
+                    margin-bottom: 20px;
+                    border: 1px solid #dc3545;
+                }
+
+                .transactions-grid {
+                    display: grid;
+                    gap: 20px;
+                }
+
+                .user-card {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+                }
+
+                .user-card h2 {
+                    margin-bottom: 15px;
+                    color: #333;
+                }
+
+                .transaction-item {
+                    background-color: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 4px;
+                    margin-bottom: 15px;
+                }
+
+                .transaction-details {
+                    margin-bottom: 10px;
+                }
+
+                .transaction-details p {
+                    margin: 5px 0;
+                }
+
+                select {
+                    width: 100%;
+                    padding: 8px;
+                    border-radius: 4px;
+                    border: 1px solid #ddd;
+                    font-size: 14px;
+                }
+
+                select.processing {
+                    background-color: #fff3cd;
+                }
+
+                select.completed {
+                    background-color: #d4edda;
+                }
+
+                select.failed {
+                    background-color: #f8d7da;
+                }
+
+                @media (max-width: 768px) {
+                    .container {
+                        padding: 10px;
+                    }
+
+                    .header {
+                        flex-direction: column;
+                        gap: 10px;
+                        text-align: center;
+                    }
+
+                    .transaction-item {
+                        padding: 10px;
+                    }
+                }
+            `}</style>
         </div>
     )
 }
