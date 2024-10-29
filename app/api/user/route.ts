@@ -12,17 +12,10 @@ const LEVELS = [
 ];
 
 function calculateProfileMetrics(piAmountArray: number[]) {
-    // Calculate total Pi sold
     const totalPiSold = piAmountArray.reduce((sum, amount) => sum + amount, 0);
-    
-    // Calculate XP (1 Pi = 1 XP)
     const xp = totalPiSold;
-    
-    // Calculate current level
     const currentLevel = LEVELS.findIndex(lvl => xp < lvl.threshold);
     const level = currentLevel === -1 ? LEVELS.length : currentLevel;
-    
-    // Calculate Pi points based on level and XP
     const pointsRate = LEVELS[level - 1]?.pointsPerHundredXP || LEVELS[LEVELS.length - 1].pointsPerHundredXP;
     const piPoints = Math.floor(xp / 100) * pointsRate;
 
@@ -32,6 +25,13 @@ function calculateProfileMetrics(piAmountArray: number[]) {
         level,
         piPoints
     };
+}
+
+// Helper function to check if a new transaction is allowed
+function canInitiateNewTransaction(transactionStatus: string[]) {
+    if (transactionStatus.length === 0) return true;
+    const lastStatus = transactionStatus[transactionStatus.length - 1];
+    return lastStatus === 'completed' || lastStatus === 'failed';
 }
 
 export async function POST(req: NextRequest) {
@@ -53,9 +53,43 @@ export async function POST(req: NextRequest) {
                     username: userData.username || '',
                     firstName: userData.first_name || '',
                     lastName: userData.last_name || '',
-                    level: 1 // Set default level for new users
+                    level: 1,
+                    transactionStatus: []  // Initialize empty status array
                 }
             })
+        }
+
+        // Handle new transaction initiation
+        if (userData.newTransaction) {
+            if (!canInitiateNewTransaction(user.transactionStatus)) {
+                return NextResponse.json({ 
+                    error: 'Cannot start new transaction while previous transaction is processing'
+                }, { status: 400 })
+            }
+
+            user = await prisma.user.update({
+                where: { telegramId: userData.id },
+                data: { 
+                    transactionStatus: {
+                        push: 'processing'  // Add new processing status
+                    }
+                }
+            })
+        }
+
+        // Handle transaction status update if provided
+        if (userData.updateTransactionStatus) {
+            const { index, status } = userData.updateTransactionStatus
+            if (index >= 0 && ['processing', 'completed', 'failed'].includes(status)) {
+                const newStatuses = [...user.transactionStatus]
+                newStatuses[index] = status
+                user = await prisma.user.update({
+                    where: { telegramId: userData.id },
+                    data: { 
+                        transactionStatus: newStatuses
+                    }
+                })
+            }
         }
 
         // Handle level update if requested
@@ -74,7 +108,8 @@ export async function POST(req: NextRequest) {
         // Return combined user data and metrics
         return NextResponse.json({
             ...user,
-            ...metrics
+            ...metrics,
+            status: user.transactionStatus  // Include status in response
         })
     } catch (error) {
         console.error('Error processing user data:', error)
