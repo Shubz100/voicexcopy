@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import './page.css';
 
 interface User {
     telegramId: number;
@@ -50,16 +51,16 @@ export default function AdminTransactions() {
     const failedTransactions = users.filter(user => user.transactionStatus.includes('Failed'));
 
     return (
-        <div style={styles.container}>
-            <h1 style={styles.title}>Admin Transactions</h1>
-            {error && <p style={styles.error}>{error}</p>}
-            {loading && <p style={styles.loading}>Loading...</p>}
+        <div className="container">
+            <h1 className="title">Admin Transactions</h1>
+            {error && <p className="error">{error}</p>}
+            {loading && <p className="loading">Loading...</p>}
             
-            <section style={styles.section}>
-                <h2 style={{ ...styles.sectionTitle, color: '#FFA500' }}>Pending Transactions</h2>
+            <section className="section">
+                <h2 className="section-title pending">Pending Transactions</h2>
                 {pendingTransactions.length > 0 ? (
                     pendingTransactions.map(user => (
-                        <div key={user.telegramId} style={styles.card}>
+                        <div key={user.telegramId} className="card">
                             <p><strong>Username:</strong> {user.username}</p>
                             <p><strong>Amount:</strong> {user.piAmount.join(', ')}</p>
                             <p><strong>Payment Method:</strong> {user.paymentMethod.join(', ')}</p>
@@ -71,11 +72,11 @@ export default function AdminTransactions() {
                 )}
             </section>
 
-            <section style={styles.section}>
-                <h2 style={{ ...styles.sectionTitle, color: '#28A745' }}>Completed Transactions</h2>
+            <section className="section">
+                <h2 className="section-title completed">Completed Transactions</h2>
                 {completedTransactions.length > 0 ? (
                     completedTransactions.map(user => (
-                        <div key={user.telegramId} style={styles.card}>
+                        <div key={user.telegramId} className="card">
                             <p><strong>Username:</strong> {user.username}</p>
                             <p><strong>Amount:</strong> {user.piAmount.join(', ')}</p>
                             <p><strong>Payment Method:</strong> {user.paymentMethod.join(', ')}</p>
@@ -87,11 +88,11 @@ export default function AdminTransactions() {
                 )}
             </section>
 
-            <section style={styles.section}>
-                <h2 style={{ ...styles.sectionTitle, color: '#DC3545' }}>Failed Transactions</h2>
+            <section className="section">
+                <h2 className="section-title failed">Failed Transactions</h2>
                 {failedTransactions.length > 0 ? (
                     failedTransactions.map(user => (
-                        <div key={user.telegramId} style={styles.card}>
+                        <div key={user.telegramId} className="card">
                             <p><strong>Username:</strong> {user.username}</p>
                             <p><strong>Amount:</strong> {user.piAmount.join(', ')}</p>
                             <p><strong>Payment Method:</strong> {user.paymentMethod.join(', ')}</p>
@@ -105,39 +106,3 @@ export default function AdminTransactions() {
         </div>
     );
 }
-
-const styles = {
-    container: {
-        maxWidth: '800px',
-        margin: '0 auto',
-        padding: '20px',
-        fontFamily: 'Arial, sans-serif',
-    },
-    title: {
-        fontSize: '2em',
-        textAlign: 'center',
-        marginBottom: '20px',
-    },
-    error: {
-        color: 'red',
-        textAlign: 'center',
-    },
-    loading: {
-        textAlign: 'center',
-        fontStyle: 'italic',
-    },
-    section: {
-        marginTop: '20px',
-    },
-    sectionTitle: {
-        fontSize: '1.5em',
-        marginBottom: '10px',
-    },
-    card: {
-        border: '1px solid #ccc',
-        borderRadius: '5px',
-        padding: '10px',
-        marginBottom: '10px',
-        backgroundColor: '#f9f9f9',
-    },
-};
