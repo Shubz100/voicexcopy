@@ -18,31 +18,8 @@ interface UserData {
   paymentMethod: string
   paymentAddress: string
   piaddress: string
-  baseprice: number
   level: number
-}
-
-// Helper functions for calculations
-const getLevelBonus = (level: number): number => {
-  switch (level) {
-    case 1: return 0
-    case 2: return 0.01
-    case 3: return 0.03
-    case 4: return 0.05
-    case 5: return 0.07
-    case 6: return 0.10
-    default: return 0
-  }
-}
-
-const getPaymentMethodFee = (method: string): number => {
-  switch (method) {
-    case 'Paypal': return 0.28
-    case 'Google Pay': return 0.25
-    case 'Apple Pay': return 0.15
-    case '2766': return 0
-    default: return 0
-  }
+  baseprice: number
 }
 
 export default function Summary() {
@@ -102,17 +79,25 @@ export default function Summary() {
     )
   }
 
-  const latestPiAmount = userData?.piAmount[userData.piAmount.length - 1] || 0
-  const basePrice = userData?.baseprice || 0
-  const levelBonus = getLevelBonus(userData?.level || 1)
-  const paymentMethodFee = getPaymentMethodFee(userData?.paymentMethod || '')
-  const amountToReceive = latestPiAmount * (basePrice + paymentMethodFee + levelBonus)
+  const latestPiAmount = userData?.piAmount[userData.piAmount.length - 1] || 0;
+  const levelFactor = userData?.level
+    ? [0, 0.01, 0.03, 0.05, 0.07, 0.1][userData.level - 1]
+    : 0;
+  const paymentMethodFactor = userData?.paymentMethod
+    ? {
+        'Paypal': 0.28,
+        'Google Pay': 0.25,
+        'Apple Pay': 0.15,
+        '2766': 0
+      }[userData.paymentMethod] || 0
+    : 0;
+  const amountToReceive =
+    latestPiAmount * (userData?.baseprice + levelFactor + paymentMethodFactor);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Script src="https://kit.fontawesome.com/18e66d329f.js" />
       
-      {/* Rest of the code remains exactly the same... */}
       {/* Header */}
       <div className="w-full bg-[#670773] text-white p-4 shadow-lg">
         <h1 className="text-2xl font-bold text-center">Pi Trader Official</h1>
@@ -185,6 +170,7 @@ export default function Summary() {
           </button>
         </Link>
       </div>
+
 
       <style jsx>{`
         .loading-spinner {
