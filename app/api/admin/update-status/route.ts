@@ -1,11 +1,16 @@
+// app/api/admin/update-status/route.ts
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 export async function POST(req: NextRequest) {
     try {
-        const { telegramId, transactionIndex, newStatus, adminKey } = await req.json()
+        // Get admin key from Authorization header
+        const authHeader = req.headers.get('Authorization')
+        const adminKey = authHeader?.replace('Bearer ', '')
 
-        // Basic admin authentication - store this in environment variables
+        const { telegramId, transactionIndex, newStatus } = await req.json()
+
+        // Basic admin authentication
         if (adminKey !== process.env.ADMIN_SECRET_KEY) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
