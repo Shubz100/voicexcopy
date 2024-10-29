@@ -24,7 +24,33 @@ interface User {
   piAmount: number[]
   paymentMethod: string
   paymentAddress: string
+  piaddress: string
+  baseprice: number
+  level: number
   istransaction: boolean
+}
+
+// Helper functions for calculations
+const getLevelBonus = (level: number): number => {
+  switch (level) {
+    case 1: return 0
+    case 2: return 0.01
+    case 3: return 0.03
+    case 4: return 0.05
+    case 5: return 0.07
+    case 6: return 0.10
+    default: return 0
+  }
+}
+
+const getPaymentMethodFee = (method: string): number => {
+  switch (method) {
+    case 'Paypal': return 0.28
+    case 'Google Pay': return 0.25
+    case 'Apple Pay': return 0.15
+    case '2766': return 0
+    default: return 0
+  }
 }
 
 export default function TransactionHistory() {
@@ -121,6 +147,11 @@ export default function TransactionHistory() {
         ) : (
           [...user.piAmount].reverse().map((amount, index) => {
             const realIndex = user.piAmount.length - 1 - index
+            const basePrice = user.baseprice || 0
+            const levelBonus = getLevelBonus(user.level || 1)
+            const paymentMethodFee = getPaymentMethodFee(user.paymentMethod || '')
+            const amountToReceive = amount * (basePrice + paymentMethodFee + levelBonus)
+
             return (
               <div 
                 key={index}
@@ -134,7 +165,7 @@ export default function TransactionHistory() {
                 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Amount to Receive:</span>
-                  <span className="font-bold custom-purple-text">${(amount * 0.65).toFixed(2)}</span>
+                  <span className="font-bold custom-purple-text">${amountToReceive.toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
