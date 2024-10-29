@@ -2,8 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { toast } from 'react-toastify'
-import { CopyToClipboard } from 'react-copy-to-clipboard'
 
 interface User {
   telegramId: number
@@ -12,10 +10,6 @@ interface User {
   transactionStatus: string[]
   paymentMethod: string[]
   paymentAddress: string[]
-}
-
-interface GroupedTransactions {
-  [key: string]: User[]
 }
 
 export default function AdminTransactions() {
@@ -82,12 +76,26 @@ export default function AdminTransactions() {
             return user
           })
         })
-        toast.success('Transaction status updated successfully.')
+        showToast('Transaction status updated successfully.', 'success')
       }
     } catch (err) {
       setError('Failed to update status')
-      toast.error('Failed to update transaction status.')
+      showToast('Failed to update transaction status.', 'error')
     }
+  }
+
+  function showToast(message: string, type: 'success' | 'error') {
+    const toastElement = document.createElement('div')
+    toastElement.classList.add('toast', type)
+    toastElement.textContent = message
+    document.body.appendChild(toastElement)
+
+    setTimeout(() => {
+      toastElement.classList.add('fade-out')
+      setTimeout(() => {
+        toastElement.remove()
+      }, 300)
+    }, 3000)
   }
 
   if (!isAuthenticated) {
@@ -126,7 +134,7 @@ export default function AdminTransactions() {
   }
 
   // Group transactions by status
-  const groupedTransactions: GroupedTransactions = users.reduce((acc, user) => {
+  const groupedTransactions: { [key: string]: User[] } = users.reduce((acc, user) => {
     user.transactionStatus.forEach((status, index) => {
       if (!acc[status]) {
         acc[status] = []
@@ -141,7 +149,7 @@ export default function AdminTransactions() {
       })
     })
     return acc
-  }, {} as GroupedTransactions)
+  }, {} as { [key: string]: User[] })
 
   const statusCounts: { [key: string]: number } = Object.keys(groupedTransactions).reduce((acc, status) => {
     acc[status] = groupedTransactions[status].length
@@ -197,14 +205,12 @@ export default function AdminTransactions() {
                     <p><strong>Amount:</strong> {user.piAmount[0]} Pi</p>
                     <p><strong>Payment Method:</strong> {user.paymentMethod[0]}</p>
                     <p><strong>Payment Address:</strong> {user.paymentAddress[0]}</p>
-                    <CopyToClipboard
-                      text={user.paymentAddress[0]}
-                      onCopy={() => toast.success('Payment address copied to clipboard')}
+                    <button
+                      className="copy-button"
+                      onClick={() => copyToClipboard(user.paymentAddress[0])}
                     >
-                      <button className="copy-button">
-                        <i className="fas fa-copy"></i>
-                      </button>
-                    </CopyToClipboard>
+                      <i className="fas fa-copy"></i>
+                    </button>
                   </div>
                   <div className="status-selector">
                     <select
@@ -406,4 +412,9 @@ export default function AdminTransactions() {
       `}</style>
     </div>
   )
+
+  function copyToClipboard(text: string) {
+    navigator.clipboard.writeText(text)
+    showToast('Payment address copied to clipboard', 'success')
+  }
 }
