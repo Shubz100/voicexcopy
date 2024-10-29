@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       if (inviterId) {
         const inviterInfo = await prisma.user.findUnique({
           where: { telegramId: inviterId },
-          select: { username: true, firstName: true, lastName: true, totalPoints: true },
+          select: { username: true, firstName: true, lastName: true, totalPoints: true, invitePoints: true },
         });
 
         if (inviterInfo) {
@@ -54,11 +54,8 @@ export async function POST(req: NextRequest) {
               points: {
                 increment: 2500,
               },
-              totalPoints: {
-                increment: 2500,
-              },
               invitePoints: {
-                increment: Math.floor(2500 * 0.2), // 20% of 2,500 points
+                increment: Math.floor(inviterInfo.totalPoints * 0.2), // 20% of inviter's total points
               },
             },
           });
