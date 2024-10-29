@@ -17,7 +17,7 @@ interface Transaction {
   piAmount: number
   paymentMethod: string
   paymentAddress: string
-  status: string // 'processing' | 'completed' | 'failed'
+  status: string
   piAddress: string
 }
 
@@ -25,7 +25,7 @@ interface User {
   piAmount: number[]
   paymentMethod: string[]
   paymentAddress: string[]
-  transactionStatus: string[] // Array of status values
+  transactionStatus: string[]
   piaddress: string[]
   level: number
   points: number
@@ -38,6 +38,7 @@ export default function TransactionHistory() {
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [mounted, setMounted] = useState(false)
+  const [expandedCards, setExpandedCards] = useState<number[]>([])
 
   useEffect(() => {
     setMounted(true)
@@ -79,7 +80,14 @@ export default function TransactionHistory() {
     }
   }, [])
 
-  // Helper function to get status display information
+  const toggleCard = (index: number) => {
+    setExpandedCards(prev => 
+      prev.includes(index)
+        ? prev.filter(i => i !== index)
+        : [...prev, index]
+    )
+  }
+
   const getStatusInfo = (status: string) => {
     switch (status.toLowerCase()) {
       case 'processing':
@@ -133,7 +141,6 @@ export default function TransactionHistory() {
     )
   }
 
-  // Create transaction array by combining data
   const transactions = user.piAmount.map((amount, index) => ({
     piAmount: amount,
     paymentMethod: user.paymentMethod[index] || '',
@@ -146,7 +153,6 @@ export default function TransactionHistory() {
     <div className={`bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen ${mounted ? 'fade-in' : ''}`}>
       <Script src="https://kit.fontawesome.com/18e66d329f.js"/>
       
-      {/* Header */}
       <div className="w-full custom-purple text-white p-4 flex items-center justify-between shadow-lg slide-down">
         <Link href="/">
           <button className="focus:outline-none hover-scale">
@@ -157,7 +163,6 @@ export default function TransactionHistory() {
         <div></div>
       </div>
 
-      {/* User Stats Section */}
       <div className="container mx-auto p-4 mb-4">
         <div className="bg-white rounded-lg shadow-lg p-4 space-y-2 fade-in-up">
           <div className="flex justify-between items-center">
@@ -179,7 +184,6 @@ export default function TransactionHistory() {
         </div>
       </div>
 
-      {/* Transaction Cards */}
       <div className="container mx-auto p-4 space-y-4">
         {transactions.length === 0 ? (
           <div className="text-center text-gray-500 mt-8 fade-in-up">
@@ -188,47 +192,64 @@ export default function TransactionHistory() {
         ) : (
           [...transactions].reverse().map((transaction, index) => {
             const statusInfo = getStatusInfo(transaction.status)
+            const isExpanded = expandedCards.includes(index)
             
             return (
               <div 
                 key={index}
-                className="bg-white rounded-lg shadow-lg p-6 space-y-3 fade-in-up"
+                className="bg-white rounded-lg shadow-lg p-6 space-y-3 fade-in-up transition-all duration-300"
                 style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Pi Amount Sold:</span>
-                  <span className="font-bold custom-purple-text">{transaction.piAmount} Pi</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Amount to Receive:</span>
-                  <span className="font-bold custom-purple-text">
-                    ${(transaction.piAmount * 0.65).toFixed(2)}
-                  </span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Payment Method:</span>
-                  <span className="font-medium">{transaction.paymentMethod}</span>
-                </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Payment Address:</span>
-                  <span className="font-medium break-all">{transaction.paymentAddress}</span>
+                {/* Always visible content */}
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Pi Amount Sold:</span>
+                    <span className="font-bold custom-purple-text">{transaction.piAmount} Pi</span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Amount to Receive:</span>
+                    <span className="font-bold custom-purple-text">
+                      ${(transaction.piAmount * 0.65).toFixed(2)}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Status:</span>
+                    <span className={`font-medium ${statusInfo.color} flex items-center gap-2`}>
+                      <i className={statusInfo.icon}></i>
+                      {statusInfo.text}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Pi Wallet Address:</span>
-                  <span className="font-medium break-all">{transaction.piAddress}</span>
+                {/* Expandable content */}
+                <div className={`transition-all duration-300 overflow-hidden ${isExpanded ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="pt-3 border-t border-gray-200 space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Payment Method:</span>
+                      <span className="font-medium">{transaction.paymentMethod}</span>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Payment Address:</span>
+                      <span className="font-medium break-all">{transaction.paymentAddress}</span>
+                    </div>
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">Pi Wallet Address:</span>
+                      <span className="font-medium break-all">{transaction.piAddress}</span>
+                    </div>
+                  </div>
                 </div>
-                
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-600">Status:</span>
-                  <span className={`font-medium ${statusInfo.color} flex items-center gap-2`}>
-                    <i className={statusInfo.icon}></i>
-                    {statusInfo.text}
-                  </span>
-                </div>
+
+                {/* Toggle button */}
+                <button 
+                  onClick={() => toggleCard(index)}
+                  className="w-full text-center text-sm font-medium text-purple-600 hover:text-purple-800 transition-colors duration-200 mt-2"
+                >
+                  {isExpanded ? 'Click to collapse' : 'Click to view details'}
+                </button>
               </div>
             )
           })
