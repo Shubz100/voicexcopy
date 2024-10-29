@@ -15,39 +15,15 @@ declare global {
 
 interface UserData {
   piAmount: number[]
-  paymentMethod: string[]
+  paymentMethod: string
   paymentAddress: string
   piaddress: string
-  level: number
-  baseprice: number
 }
 
 export default function Summary() {
   const [userData, setUserData] = useState<UserData | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
-
-  const getLevelBonus = (level: number): number => {
-    const levelBonuses = {
-      1: 0,
-      2: 0.01,
-      3: 0.03,
-      4: 0.05,
-      5: 0.07,
-      6: 0.1
-    }
-    return levelBonuses[level as keyof typeof levelBonuses] || 0
-  }
-
-  const getPaymentMethodRate = (method: string): number => {
-    const paymentRates: { [key: string]: number } = {
-      'PayPal': 0.28,
-      'Google Pay': 0.25,
-      'Apple Pay': 0.15,
-      '2766': 0
-    }
-    return paymentRates[method] || 0
-  }
 
   useEffect(() => {
     if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
@@ -102,12 +78,7 @@ export default function Summary() {
   }
 
   const latestPiAmount = userData?.piAmount[userData.piAmount.length - 1] || 0
-  const latestPaymentMethod = userData?.paymentMethod[userData.paymentMethod.length - 1] || ''
-  const basePrice = userData?.baseprice || 0
-  const levelBonus = getLevelBonus(userData?.level || 1)
-  const paymentMethodRate = getPaymentMethodRate(latestPaymentMethod)
-  
-  const amountToReceive = latestPiAmount * (basePrice + paymentMethodRate + levelBonus)
+  const amountToReceive = latestPiAmount * 0.65
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -149,7 +120,7 @@ export default function Summary() {
             
             <div className="flex justify-between items-center border-b pb-2">
               <span className="text-gray-600">Payment Method:</span>
-              <span className="font-semibold text-[#670773]">{latestPaymentMethod || 'N/A'}</span>
+              <span className="font-semibold text-[#670773]">{userData?.paymentMethod || 'N/A'}</span>
             </div>
             
             <div className="flex justify-between items-center border-b pb-2">
