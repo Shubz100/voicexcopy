@@ -34,7 +34,7 @@ export default function Home() {
     } else if (item === 'Profile') {
       window.location.href = './profile'
     } else if (item === 'Admin') {
-      window.location.href = './admin'
+      window.location.href = './admin/transactions'
     }
     setMenuOpen(false)
   }
