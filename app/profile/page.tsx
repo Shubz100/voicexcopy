@@ -9,6 +9,8 @@ interface ProfileData {
   xp: number;
   level: number;
   piPoints: number;
+  transactionStatus: string[];
+  piAmount: number[];
 }
 
 interface XPRequirement {
@@ -29,6 +31,8 @@ const Profile = () => {
     xp: 0,
     level: 1,
     piPoints: 0,
+    transactionStatus: ['processing'],
+    piAmount: []
   });
 
   const levels: Level[] = [
@@ -50,6 +54,15 @@ const Profile = () => {
       }
     }
   }, []);
+
+  const calculateTotalPiSold = (statuses: string[], amounts: number[]): number => {
+    return statuses.reduce((total, status, index) => {
+      if (status === 'completed') {
+        return total + (amounts[index] || 0);
+      }
+      return total;
+    }, 0);
+  };
 
   const updateUserLevel = async (telegramId: number, level: number) => {
     try {
@@ -76,7 +89,8 @@ const Profile = () => {
       });
       const userData = await response.json();
       
-      const totalPiSold = userData.finalpis.reduce((sum: number, amount: number) => sum + amount, 0);
+      // Calculate total Pi sold based on completed transactions only
+      const totalPiSold = calculateTotalPiSold(userData.transactionStatus, userData.piAmount);
       const xp = totalPiSold;
       const currentLevel = getCurrentLevel(xp);
       const piPoints = calculatePiPoints(xp, currentLevel);
@@ -91,7 +105,9 @@ const Profile = () => {
         totalPiSold,
         xp,
         level: currentLevel,
-        piPoints
+        piPoints,
+        transactionStatus: userData.transactionStatus,
+        piAmount: userData.piAmount
       });
     } catch (error) {
       console.error('Error fetching profile data:', error);
