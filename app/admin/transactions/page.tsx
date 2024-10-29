@@ -1,10 +1,7 @@
-'use client'
-
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-toastify'
 import { CopyToClipboard } from 'react-copy-to-clipboard'
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 
 interface User {
   telegramId: number
@@ -226,6 +223,7 @@ export default function AdminTransactions() {
           padding: 20px;
           max-width: 1200px;
           margin: 0 auto;
+          font-family: Arial, sans-serif;
         }
 
         .header {
@@ -235,6 +233,12 @@ export default function AdminTransactions() {
           margin-bottom: 20px;
         }
 
+        .header h1 {
+          font-size: 24px;
+          font-weight: bold;
+          color: #333;
+        }
+
         .logout-button {
           padding: 8px 16px;
           background-color: #dc3545;
@@ -242,6 +246,7 @@ export default function AdminTransactions() {
           border: none;
           border-radius: 4px;
           cursor: pointer;
+          font-size: 14px;
         }
 
         .error-message {
@@ -251,6 +256,7 @@ export default function AdminTransactions() {
           border-radius: 4px;
           margin-bottom: 20px;
           border: 1px solid #dc3545;
+          font-size: 14px;
         }
 
         .tabs {
@@ -260,7 +266,7 @@ export default function AdminTransactions() {
         }
 
         .tab {
-          background-color: #f8f9fa;
+          background-color: #f0f0f0;
           padding: 10px 20px;
           border-radius: 4px;
           cursor: pointer;
@@ -270,10 +276,11 @@ export default function AdminTransactions() {
           justify-content: center;
           font-weight: bold;
           color: #333;
+          font-size: 14px;
         }
 
         .tab.active {
-          background-color: #670773;
+          background-color: #4d4d4d;
           color: white;
         }
 
@@ -281,12 +288,13 @@ export default function AdminTransactions() {
           background-color: #d6d6d6;
           padding: 2px 8px;
           border-radius: 4px;
-          font-size: 14px;
+          font-size: 12px;
           margin-left: 8px;
         }
 
         .transactions-grid {
           display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
           gap: 20px;
         }
 
@@ -300,10 +308,11 @@ export default function AdminTransactions() {
         .transaction-section h2 {
           margin-bottom: 15px;
           color: #333;
+          font-size: 18px;
         }
 
         .user-card {
-          background-color: #f8f9fa;
+          background-color: #f0f0f0;
           padding: 15px;
           border-radius: 4px;
           margin-bottom: 15px;
@@ -312,6 +321,7 @@ export default function AdminTransactions() {
         .user-card h3 {
           margin-bottom: 10px;
           color: #333;
+          font-size: 16px;
         }
 
         .transaction-item {
@@ -322,6 +332,7 @@ export default function AdminTransactions() {
           padding: 15px;
           border-radius: 4px;
           box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+          font-size: 14px;
         }
 
         .transaction-details {
@@ -354,12 +365,13 @@ export default function AdminTransactions() {
         }
 
         .copy-button {
-          background-color: #670773;
+          background-color: #4d4d4d;
           color: white;
           border: none;
           border-radius: 4px;
           padding: 4px 8px;
           cursor: pointer;
+          font-size: 14px;
         }
 
         @media (max-width: 768px) {
