@@ -16,6 +16,7 @@ interface PaymentMethod {
 const PaymentOptions: React.FC = () => {
   const router = useRouter();
   const [visibleInput, setVisibleInput] = useState<string | null>(null);
+  const [isContinueLoading, setIsContinueLoading] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<string | null>(null);
   const [paymentAddress, setPaymentAddress] = useState<string>('');
   const [isConnected, setIsConnected] = useState(false);
@@ -154,8 +155,9 @@ const PaymentOptions: React.FC = () => {
   };
 
   const handleContinue = async () => {
-  if (!telegramId || !selectedPayment || !paymentAddress) return;
+  if (!telegramId || !selectedPayment || !paymentAddress || isContinueLoading) return;
   
+  setIsContinueLoading(true);
   try {
     const response = await fetch('/api/payment', {
       method: 'POST',
@@ -177,6 +179,8 @@ const PaymentOptions: React.FC = () => {
     }
   } catch (error) {
     console.error('Error saving payment details:', error);
+  } finally {
+    setIsContinueLoading(false);
   }
 };
 
@@ -265,12 +269,12 @@ const PaymentOptions: React.FC = () => {
           Cancel
         </button>
         <button
-          className={`continue-button ${canContinue ? 'button-active' : 'button-disabled'}`}
-          onClick={handleContinue}
-          disabled={!canContinue}
-        >
-          Continue
-        </button>
+  className={`continue-button ${canContinue ? 'button-active' : 'button-disabled'}`}
+  onClick={handleContinue}
+  disabled={!canContinue || isContinueLoading}
+>
+  {isContinueLoading ? 'Processing...' : 'Continue'}
+</button>
       </div>
     </div>
   );
