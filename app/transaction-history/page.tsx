@@ -17,40 +17,20 @@ interface Transaction {
   piAmount: number
   paymentMethod: string
   paymentAddress: string
-  istransaction: boolean
+  status: string // 'processing' | 'completed' | 'failed'
+  piAddress: string
 }
 
 interface User {
   piAmount: number[]
-  paymentMethod: string
-  paymentAddress: string
-  piaddress: string
-  baseprice: number
+  paymentMethod: string[]
+  paymentAddress: string[]
+  transactionStatus: string[] // Array of status values
+  piaddress: string[]
   level: number
-  istransaction: boolean
-}
-
-// Helper functions for calculations
-const getLevelBonus = (level: number): number => {
-  switch (level) {
-    case 1: return 0
-    case 2: return 0.01
-    case 3: return 0.03
-    case 4: return 0.05
-    case 5: return 0.07
-    case 6: return 0.10
-    default: return 0
-  }
-}
-
-const getPaymentMethodFee = (method: string): number => {
-  switch (method) {
-    case 'Paypal': return 0.28
-    case 'Google Pay': return 0.25
-    case 'Apple Pay': return 0.15
-    case '2766': return 0
-    default: return 0
-  }
+  points: number
+  totalPiSold: number
+  xp: number
 }
 
 export default function TransactionHistory() {
@@ -99,6 +79,36 @@ export default function TransactionHistory() {
     }
   }, [])
 
+  // Helper function to get status display information
+  const getStatusInfo = (status: string) => {
+    switch (status.toLowerCase()) {
+      case 'processing':
+        return {
+          color: 'text-yellow-500',
+          icon: 'fas fa-spinner fa-spin',
+          text: 'Processing'
+        }
+      case 'completed':
+        return {
+          color: 'text-green-500',
+          icon: 'fas fa-check-circle',
+          text: 'Completed'
+        }
+      case 'failed':
+        return {
+          color: 'text-red-500',
+          icon: 'fas fa-times-circle',
+          text: 'Failed'
+        }
+      default:
+        return {
+          color: 'text-gray-500',
+          icon: 'fas fa-question-circle',
+          text: 'Unknown'
+        }
+    }
+  }
+
   if (loading) {
     return (
       <div className="container mx-auto p-4 flex items-center justify-center h-screen">
@@ -123,6 +133,15 @@ export default function TransactionHistory() {
     )
   }
 
+  // Create transaction array by combining data
+  const transactions = user.piAmount.map((amount, index) => ({
+    piAmount: amount,
+    paymentMethod: user.paymentMethod[index] || '',
+    paymentAddress: user.paymentAddress[index] || '',
+    status: user.transactionStatus[index] || 'processing',
+    piAddress: user.piaddress[index] || ''
+  }))
+
   return (
     <div className={`bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen ${mounted ? 'fade-in' : ''}`}>
       <Script src="https://kit.fontawesome.com/18e66d329f.js"/>
@@ -138,20 +157,38 @@ export default function TransactionHistory() {
         <div></div>
       </div>
 
+      {/* User Stats Section */}
+      <div className="container mx-auto p-4 mb-4">
+        <div className="bg-white rounded-lg shadow-lg p-4 space-y-2 fade-in-up">
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Level:</span>
+            <span className="font-bold custom-purple-text">{user.level}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Total Pi Sold:</span>
+            <span className="font-bold custom-purple-text">{user.totalPiSold} Pi</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">Points:</span>
+            <span className="font-bold custom-purple-text">{user.points}</span>
+          </div>
+          <div className="flex justify-between items-center">
+            <span className="text-gray-600">XP:</span>
+            <span className="font-bold custom-purple-text">{user.xp}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Transaction Cards */}
       <div className="container mx-auto p-4 space-y-4">
-        {user.piAmount.length === 0 ? (
+        {transactions.length === 0 ? (
           <div className="text-center text-gray-500 mt-8 fade-in-up">
             No transactions yet
           </div>
         ) : (
-          [...user.piAmount].reverse().map((amount, index) => {
-            const realIndex = user.piAmount.length - 1 - index
-            const basePrice = user.baseprice || 0
-            const levelBonus = getLevelBonus(user.level || 1)
-            const paymentMethodFee = getPaymentMethodFee(user.paymentMethod || '')
-            const amountToReceive = amount * (basePrice + paymentMethodFee + levelBonus)
-
+          [...transactions].reverse().map((transaction, index) => {
+            const statusInfo = getStatusInfo(transaction.status)
+            
             return (
               <div 
                 key={index}
@@ -160,28 +197,36 @@ export default function TransactionHistory() {
               >
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Pi Amount Sold:</span>
-                  <span className="font-bold custom-purple-text">{amount} Pi</span>
+                  <span className="font-bold custom-purple-text">{transaction.piAmount} Pi</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Amount to Receive:</span>
-                  <span className="font-bold custom-purple-text">${amountToReceive.toFixed(2)}</span>
+                  <span className="font-bold custom-purple-text">
+                    ${(transaction.piAmount * 0.65).toFixed(2)}
+                  </span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Payment Method:</span>
-                  <span className="font-medium">{user.paymentMethod}</span>
+                  <span className="font-medium">{transaction.paymentMethod}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Payment Address:</span>
-                  <span className="font-medium break-all">{user.paymentAddress}</span>
+                  <span className="font-medium break-all">{transaction.paymentAddress}</span>
+                </div>
+
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Pi Wallet Address:</span>
+                  <span className="font-medium break-all">{transaction.piAddress}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Status:</span>
-                  <span className={`font-medium ${user.istransaction ? 'text-yellow-500' : 'text-green-500'}`}>
-                    {user.istransaction ? 'Processing' : 'Completed'}
+                  <span className={`font-medium ${statusInfo.color} flex items-center gap-2`}>
+                    <i className={statusInfo.icon}></i>
+                    {statusInfo.text}
                   </span>
                 </div>
               </div>
