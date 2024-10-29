@@ -153,9 +153,32 @@ const PaymentOptions: React.FC = () => {
     }
   };
 
-  const handleContinue = () => {
-    router.push('/paymentproof');
-  };
+  const handleContinue = async () => {
+  if (!telegramId || !selectedPayment || !paymentAddress) return;
+  
+  try {
+    const response = await fetch('/api/payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        telegramId,
+        paymentMethod: selectedPayment,
+        paymentAddress
+      })
+    });
+    
+    const data = await response.json();
+    if (data.success) {
+      setPaymentHistory({
+        methods: [...paymentHistory.methods, selectedPayment],
+        addresses: [...paymentHistory.addresses, paymentAddress]
+      });
+      router.push('/paymentproof');
+    }
+  } catch (error) {
+    console.error('Error saving payment details:', error);
+  }
+};
 
   const isValidPaymentAddress = paymentAddress.length > 0;
   const canConnect = selectedPayment && isValidPaymentAddress && !isConnected;
