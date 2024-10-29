@@ -14,6 +14,10 @@ interface User {
   paymentAddress: string[]
 }
 
+interface GroupedTransactions {
+  [key: string]: User[]
+}
+
 export default function AdminTransactions() {
   const [users, setUsers] = useState<User[]>([])
   const [adminKey, setAdminKey] = useState('')
@@ -122,7 +126,7 @@ export default function AdminTransactions() {
   }
 
   // Group transactions by status
-  const groupedTransactions: { [key: string]: User[] } = users.reduce((acc, user) => {
+  const groupedTransactions: GroupedTransactions = users.reduce((acc, user) => {
     user.transactionStatus.forEach((status, index) => {
       if (!acc[status]) {
         acc[status] = []
@@ -137,7 +141,7 @@ export default function AdminTransactions() {
       })
     })
     return acc
-  }, {} as { [key: string]: User[] })
+  }, {} as GroupedTransactions)
 
   const statusCounts: { [key: string]: number } = Object.keys(groupedTransactions).reduce((acc, status) => {
     acc[status] = groupedTransactions[status].length
