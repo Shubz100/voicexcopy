@@ -47,39 +47,40 @@ export default function AdminTransactions() {
     }
 
     async function updateStatus(telegramId: number, transactionIndex: number, newStatus: string) {
-        try {
-            const response = await fetch('/api/admin/update-status', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${adminKey}`
-                },
-                body: JSON.stringify({
-                    telegramId,
-                    transactionIndex,
-                    newStatus
+    try {
+        const response = await fetch('/api/admin/update-status', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${adminKey}`  // Include the adminKey in the headers
+            },
+            body: JSON.stringify({
+                telegramId,
+                transactionIndex,
+                newStatus,
+            })
+        })
+
+        const data = await response.json()
+        if (data.error) {
+            setError(data.error)
+        } else {
+            // Update the local state with the new status
+            setUsers(prevUsers => {
+                return prevUsers.map(user => {
+                    if (user.telegramId === telegramId) {
+                        const newTransactionStatus = [...user.transactionStatus]
+                        newTransactionStatus[transactionIndex] = newStatus
+                        return { ...user, transactionStatus: newTransactionStatus }
+                    }
+                    return user
                 })
             })
-
-            const data = await response.json()
-            if (data.error) {
-                setError(data.error)
-            } else {
-                setUsers(prevUsers => {
-                    return prevUsers.map(user => {
-                        if (user.telegramId === telegramId) {
-                            const newTransactionStatus = [...user.transactionStatus]
-                            newTransactionStatus[transactionIndex] = newStatus
-                            return { ...user, transactionStatus: newTransactionStatus }
-                        }
-                        return user
-                    })
-                })
-            }
-        } catch (err) {
-            setError('Failed to update status')
         }
+    } catch (err) {
+        setError('Failed to update status')
     }
+}
 
     if (!isAuthenticated) {
         return (
