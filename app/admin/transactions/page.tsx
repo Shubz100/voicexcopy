@@ -335,7 +335,7 @@ export default function AdminTransactions() {
                 }
 
                 .tab {
-                    padding: 10px 20px;
+                    padding: 5px 10px;
                     border: none;
                     border-radius: 4px;
                     cursor: pointer;
@@ -361,7 +361,7 @@ export default function AdminTransactions() {
                 }
 
                 .transaction-card {
-                    background: white;
+                    background: #4d9aa1;
                     padding: 15px;
                     border-radius: 8px;
                     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
