@@ -12,13 +12,21 @@ interface User {
     paymentAddress: string[]
 }
 
+interface TransactionGroup {
+    [key: string]: User[];
+}
+
 export default function AdminTransactions() {
     const [users, setUsers] = useState<User[]>([])
     const [adminKey, setAdminKey] = useState('')
     const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
-    const [activeTab, setActiveTab] = useState('pending')
+    const [groupedTransactions, setGroupedTransactions] = useState<TransactionGroup>({
+        pending: [],
+        completed: [],
+        failed: []
+    })
     const router = useRouter()
 
     async function handleLogin(e: React.FormEvent) {
@@ -39,6 +47,7 @@ export default function AdminTransactions() {
             } else {
                 setUsers(data.users)
                 setIsAuthenticated(true)
+                groupTransactions(data.users)
             }
         } catch (err) {
             setError('Authentication failed. Please check your admin key.')
@@ -47,18 +56,49 @@ export default function AdminTransactions() {
         }
     }
 
+    function groupTransactions(users: User[]) {
+        const grouped: TransactionGroup = {
+            pending: [],
+            completed: [],
+            failed: []
+        }
+
+        users.forEach(user => {
+            user.transactionStatus.forEach((status, index) => {
+                const transaction = {
+                    telegramId: user.telegramId,
+                    username: user.username,
+                    piAmount: user.piAmount[index],
+                    transactionStatus: status,
+                    paymentMethod: user.paymentMethod[index],
+                    paymentAddress: user.paymentAddress[index]
+                }
+
+                if (status === 'processing') {
+                    grouped.pending.push(transaction)
+                } else if (status === 'completed') {
+                    grouped.completed.push(transaction)
+                } else if (status === 'failed') {
+                    grouped.failed.push(transaction)
+                }
+            })
+        })
+
+        setGroupedTransactions(grouped)
+    }
+
     async function updateStatus(telegramId: number, transactionIndex: number, newStatus: string) {
         try {
             const response = await fetch('/api/admin/update-status', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${adminKey}`  // Include the adminKey in the headers
+                    'Authorization': `Bearer ${adminKey}`
                 },
                 body: JSON.stringify({
                     telegramId,
                     transactionIndex,
-                    newStatus,
+                    newStatus
                 })
             })
 
@@ -77,6 +117,7 @@ export default function AdminTransactions() {
                         return user
                     })
                 })
+                groupTransactions(prevUsers => prevUsers)
             }
         } catch (err) {
             setError('Failed to update status')
@@ -86,14 +127,37 @@ export default function AdminTransactions() {
     if (!isAuthenticated) {
         return (
             <div className="login-container">
-                {/* Login form */}
+                <div className="login-card">
+                    <h1>Admin Authentication</h1>
+                    <form onSubmit={handleLogin}>
+                        <div className="form-group">
+                            <input
+                                type="password"
+                                placeholder="Enter Admin Key"
+                                value={adminKey}
+                                onChange={(e) => setAdminKey(e.target.value)}
+                                disabled={loading}
+                            />
+                        </div>
+                        
+                        {error && (
+                            <div className="error-message">
+                                {error}
+                            </div>
+                        )}
+                        
+                        <button 
+                            type="submit" 
+                            className="login-button"
+                            disabled={loading}
+                        >
+                            {loading ? 'Authenticating...' : 'Login'}
+                        </button>
+                    </form>
+                </div>
             </div>
         )
     }
-
-    const pendingTransactions = users.filter(user => user.transactionStatus.some(status => status === 'processing'))
-    const completedTransactions = users.filter(user => user.transactionStatus.some(status => status === 'completed'))
-    const failedTransactions = users.filter(user => user.transactionStatus.some(status => status === 'failed'))
 
     return (
         <div className="container">
@@ -105,6 +169,11 @@ export default function AdminTransactions() {
                         setIsAuthenticated(false)
                         setAdminKey('')
                         setUsers([])
+                        setGroupedTransactions({
+                            pending: [],
+                            completed: [],
+                            failed: []
+                        })
                     }}
                 >
                     Logout
@@ -118,152 +187,256 @@ export default function AdminTransactions() {
             )}
 
             <div className="tabs">
-                <button
-                    className={`tab-button ${activeTab === 'pending' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('pending')}
-                >
-                    Pending ({pendingTransactions.length})
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'completed' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('completed')}
-                >
-                    Completed ({completedTransactions.length})
-                </button>
-                <button
-                    className={`tab-button ${activeTab === 'failed' ? 'active' : ''}`}
-                    onClick={() => setActiveTab('failed')}
-                >
-                    Failed ({failedTransactions.length})
-                </button>
-            </div>
-
-            <div className="transactions-grid">
-                {activeTab === 'pending' && pendingTransactions.map((user) => (
-                    <UserCard key={user.telegramId} user={user} onUpdateStatus={updateStatus} />
-                ))}
-                {activeTab === 'completed' && completedTransactions.map((user) => (
-                    <UserCard key={user.telegramId} user={user} onUpdateStatus={updateStatus} />
-                ))}
-                {activeTab === 'failed' && failedTransactions.map((user) => (
-                    <UserCard key={user.telegramId} user={user} onUpdateStatus={updateStatus} />
-                ))}
-            </div>
-        </div>
-    )
-}
-
-interface UserCardProps {
-    user: User
-    onUpdateStatus: (telegramId: number, transactionIndex: number, newStatus: string) => void
-}
-
-const UserCard = ({ user, onUpdateStatus }: UserCardProps) => {
-    return (
-        <div className="user-card">
-            <h2>
-                {user.username ? `@${user.username}` : `User ${user.telegramId}`}
-            </h2>
-            
-            {user.piAmount.map((amount, index) => (
-                <div key={index} className="transaction-item">
-                    <div className="transaction-details">
-                        <p><strong>Transaction #{index + 1}</strong></p>
-                        <p><strong>Amount:</strong> {amount} Pi</p>
-                        <p><strong>Payment Method:</strong> {user.paymentMethod[index]}</p>
-                        <p><strong>Payment Address:</strong> {user.paymentAddress[index]}</p>
-                    </div>
-                    <div className="status-selector">
-                        <select
-                            value={user.transactionStatus[index]}
-                            onChange={(e) => onUpdateStatus(user.telegramId, index, e.target.value)}
-                            className={user.transactionStatus[index]}
-                        >
-                            <option value="processing">Processing</option>
-                            <option value="completed">Completed</option>
-                            <option value="failed">Failed</option>
-                        </select>
-                    </div>
+                <div className={`tab ${groupedTransactions.pending.length > 0 ? 'active' : ''}`}>
+                    <h2>Pending ({groupedTransactions.pending.length})</h2>
+                    {groupedTransactions.pending.length > 0 ? (
+                        <div className="transactions-grid">
+                            {groupedTransactions.pending.map((transaction, index) => (
+                                <div key={`${transaction.telegramId}-${index}`} className="transaction-item">
+                                    <div className="transaction-details">
+                                        <p><strong>Transaction #{index + 1}</strong></p>
+                                        <p><strong>Amount:</strong> {transaction.piAmount} Pi</p>
+                                        <p><strong>Payment Method:</strong> {transaction.paymentMethod}</p>
+                                        <p><strong>Payment Address:</strong> {transaction.paymentAddress}</p>
+                                    </div>
+                                    <div className="status-selector">
+                                        <select
+                                            value={transaction.transactionStatus}
+                                            onChange={(e) => updateStatus(transaction.telegramId, index, e.target.value)}
+                                            className={transaction.transactionStatus}
+                                        >
+                                            <option value="processing">Processing</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="failed">Failed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="no-transactions">No pending transactions</div>
+                    )}
                 </div>
-            ))}
+                <div className={`tab ${groupedTransactions.completed.length > 0 ? 'active' : ''}`}>
+                    <h2>Completed ({groupedTransactions.completed.length})</h2>
+                    {groupedTransactions.completed.length > 0 ? (
+                        <div className="transactions-grid">
+                            {groupedTransactions.completed.map((transaction, index) => (
+                                <div key={`${transaction.telegramId}-${index}`} className="transaction-item">
+                                    <div className="transaction-details">
+                                        <p><strong>Transaction #{index + 1}</strong></p>
+                                        <p><strong>Amount:</strong> {transaction.piAmount} Pi</p>
+                                        <p><strong>Payment Method:</strong> {transaction.paymentMethod}</p>
+                                        <p><strong>Payment Address:</strong> {transaction.paymentAddress}</p>
+                                    </div>
+                                    <div className="status-selector">
+                                        <select
+                                            value={transaction.transactionStatus}
+                                            onChange={(e) => updateStatus(transaction.telegramId, index, e.target.value)}
+                                            className={transaction.transactionStatus}
+                                        >
+                                            <option value="processing">Processing</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="failed">Failed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="no-transactions">No completed transactions</div>
+                    )}
+                </div>
+                <div className={`tab ${groupedTransactions.failed.length > 0 ? 'active' : ''}`}>
+                    <h2>Failed ({groupedTransactions.failed.length})</h2>
+                    {groupedTransactions.failed.length > 0 ? (
+                        <div className="transactions-grid">
+                            {groupedTransactions.failed.map((transaction, index) => (
+                                <div key={`${transaction.telegramId}-${index}`} className="transaction-item">
+                                    <div className="transaction-details">
+                                        <p><strong>Transaction #{index + 1}</strong></p>
+                                        <p><strong>Amount:</strong> {transaction.piAmount} Pi</p>
+                                        <p><strong>Payment Method:</strong> {transaction.paymentMethod}</p>
+                                        <p><strong>Payment Address:</strong> {transaction.paymentAddress}</p>
+                                    </div>
+                                    <div className="status-selector">
+                                        <select
+                                            value={transaction.transactionStatus}
+                                            onChange={(e) => updateStatus(transaction.telegramId, index, e.target.value)}
+                                            className={transaction.transactionStatus}
+                                        >
+                                            <option value="processing">Processing</option>
+                                            <option value="completed">Completed</option>
+                                            <option value="failed">Failed</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div className="no-transactions">No failed transactions</div>
+                    )}
+                </div>
+            </div>
+
+            {loading && (
+                <div className="loading-container">
+                    <div className="loading-spinner"></div>
+                </div>
+            )}
+
+            <style jsx>{`
+                .container {
+                    padding: 20px;
+                    max-width: 1200px;
+                    margin: 0 auto;
+                }
+
+                .header {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    margin-bottom: 20px;
+                }
+
+                .logout-button {
+                    padding: 8px 16px;
+                    background-color: #dc3545;
+                    color: white;
+                    border: none;
+                    border-radius: 4px;
+                    cursor: pointer;
+                }
+
+                .error-message {
+                    background-color: #fff3f3;
+                    color: #dc3545;
+                    padding: 10px;
+                    border-radius: 4px;
+                    margin-bottom: 20px;
+                    border: 1px solid #dc3545;
+                }
+
+                .tabs {
+                    display: flex;
+                    justify-content: center;
+                    margin-bottom: 20px;
+                }
+
+                .tab {
+                    background-color: #f8f9fa;
+                    padding: 10px 20px;
+                    border-radius: 4px;
+                    cursor: pointer;
+                    margin: 0 10px;
+                    transition: background-color 0.3s ease;
+                }
+
+                .tab.active {
+                    background-color: #670773;
+                    color: white;
+                }
+
+                .transactions-grid {
+                    display: grid;
+                    gap: 20px;
+                }
+
+                .transaction-item {
+                    background-color: #f8f9fa;
+                    padding: 15px;
+                    border-radius: 4px;
+                    margin-bottom: 15px;
+                }
+
+                .transaction-details {
+                    margin-bottom: 10px;
+                }
+
+                .transaction-details p {
+                    margin: 5px 0;
+                }
+
+                select {
+                    width: 100%;
+                    padding: 8px;
+                    border-radius: 4px;
+                    border: 1px solid #ddd;
+                    font-size: 14px;
+                }
+
+                select.processing {
+                    background-color: #fff3cd;
+                }
+
+                select.completed {
+                    background-color: #d4edda;
+                }
+
+                select.failed {
+                    background-color: #f8d7da;
+                }
+
+                .no-transactions {
+                    text-align: center;
+                    color: #666;
+                    padding: 20px;
+                }
+
+                .loading-container {
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background-color: rgba(255, 255, 255, 0.8);
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    z-index: 1000;
+                }
+
+                .loading-spinner {
+                    border: 4px solid rgba(103, 7, 115, 0.1);
+                    border-left-color: #670773;
+                    border-radius: 50%;
+                    width: 40px;
+                    height: 40px;
+                    animation: spin 1s linear infinite;
+                }
+
+                @keyframes spin {
+                    to {
+                        transform: rotate(360deg);
+                    }
+                }
+
+                @media (max-width: 768px) {
+                    .container {
+                        padding: 10px;
+                    }
+
+                    .header {
+                        flex-direction: column;
+                        gap: 10px;
+                        text-align: center;
+                    }
+
+                    .tabs {
+                        flex-direction: column;
+                        align-items: center;
+                    }
+
+                    .tab {
+                        width: 100%;
+                        margin: 5px 0;
+                    }
+
+                    .transaction-item {
+                        padding: 10px;
+                    }
+                }
+            `}</style>
         </div>
     )
 }
-
-const LoadingIndicator = () => {
-    return (
-        <div className="loading-container">
-            <div className="loading-spinner"></div>
-        </div>
-    )
-}
-
-const ErrorMessage = ({ message }: { message: string }) => {
-    return (
-        <div className="error-message">
-            {message}
-        </div>
-    )
-}
-
-<style jsx>{`
-    /* ... existing styles ... */
-
-    .tabs {
-        display: flex;
-        justify-content: center;
-        margin-bottom: 20px;
-    }
-
-    .tab-button {
-        padding: 10px 20px;
-        background-color: #f8f9fa;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-        transition: background-color 0.3s;
-    }
-
-    .tab-button.active {
-        background-color: #670773;
-        color: white;
-    }
-
-    .tab-button:hover:not(.active) {
-        background-color: #e9ecef;
-    }
-
-    .loading-container {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 200px;
-    }
-
-    .loading-spinner {
-        border: 4px solid rgba(103, 7, 115, 0.1);
-        border-left-color: #670773;
-        border-radius: 50%;
-        width: 40px;
-        height: 40px;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to {
-            transform: rotate(360deg);
-        }
-    }
-
-    @media (max-width: 768px) {
-        .tabs {
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-
-        .tab-button {
-            flex-grow: 1;
-        }
-    }
-`}</style>
