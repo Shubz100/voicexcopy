@@ -91,8 +91,9 @@ export default function Summary() {
         '2766': 0
       }[userData.paymentMethod] || 0
     : 0;
+  const baseprice = userData?.baseprice || 0;
   const amountToReceive =
-    latestPiAmount * (userData?.baseprice + levelFactor + paymentMethodFactor);
+    latestPiAmount * (baseprice + levelFactor + paymentMethodFactor);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
