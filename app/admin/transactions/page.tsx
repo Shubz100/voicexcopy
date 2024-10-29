@@ -135,21 +135,21 @@ export default function AdminTransactions() {
 
   // Group transactions by status
   const groupedTransactions: { [key: string]: User[] } = users.reduce((acc, user) => {
-    user.transactionStatus.forEach((status, index) => {
-      if (!acc[status]) {
-        acc[status] = []
-      }
-      acc[status].push({
-        telegramId: user.telegramId,
-        username: user.username,
-        piAmount: [user.piAmount[index]],
-        transactionStatus: [status],
-        paymentMethod: [user.paymentMethod[index]],
-        paymentAddress: [user.paymentAddress[index]]
-      })
-    })
-    return acc
-  }, {} as { [key: string]: User[] })
+  user.transactionStatus.forEach((status, index) => {
+    if (!acc[status]) {
+      acc[status] = [];
+    }
+    acc[status].push({
+      telegramId: user.telegramId,
+      username: user.username,
+      piAmount: [user.piAmount[index]],
+      transactionStatus: [status],
+      paymentMethod: [user.paymentMethod[index]],
+      paymentAddress: [user.paymentAddress[index]]
+    });
+  });
+  return acc;
+}, {} as { [key: string]: User[] });
 
   const statusCounts: { [key: string]: number } = Object.keys(groupedTransactions).reduce((acc, status) => {
     acc[status] = groupedTransactions[status].length
