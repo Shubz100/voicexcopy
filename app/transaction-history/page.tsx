@@ -31,6 +31,46 @@ interface User {
   points: number
   totalPiSold: number
   xp: number
+  baseprice: number
+}
+
+const getPaymentBonus = (paymentMethod: string): number => {
+  switch (paymentMethod.toLowerCase()) {
+    case 'paypal':
+      return 0.28
+    case 'googlepay':
+      return 0.25
+    case 'applepay':
+      return 0.15
+    case 'mastercard':
+      return 0
+    default:
+      return 0
+  }
+}
+
+const getLevelBonus = (level: number): number => {
+  switch (level) {
+    case 2:
+      return 0.01
+    case 3:
+      return 0.03
+    case 4:
+      return 0.05
+    case 5:
+      return 0.07
+    case 6:
+      return 0.01
+    default:
+      return 0
+  }
+}
+
+const calculateAmount = (piAmount: number, paymentMethod: string, level: number, baseprice: number): number => {
+  const paymentBonus = getPaymentBonus(paymentMethod)
+  const levelBonus = getLevelBonus(level)
+  const pricePerPi = baseprice + paymentBonus + levelBonus
+  return piAmount * pricePerPi
 }
 
 export default function TransactionHistory() {
@@ -193,6 +233,12 @@ export default function TransactionHistory() {
           [...transactions].reverse().map((transaction, index) => {
             const statusInfo = getStatusInfo(transaction.status)
             const isExpanded = expandedCards.includes(index)
+            const amount = calculateAmount(
+              transaction.piAmount, 
+              transaction.paymentMethod, 
+              user.level,
+              user.baseprice
+            )
             
             return (
               <div 
@@ -210,7 +256,7 @@ export default function TransactionHistory() {
                   <div className="flex justify-between items-center">
                     <span className="text-gray-600">Amount to Receive:</span>
                     <span className="font-bold custom-purple-text">
-                      ${(transaction.piAmount * 0.65).toFixed(2)}
+                      ${amount.toFixed(2)}
                     </span>
                   </div>
                   
