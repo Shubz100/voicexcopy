@@ -25,30 +25,6 @@ interface User {
   paymentMethod: string
   paymentAddress: string
   istransaction: boolean
-  level: number
-  baseprice: number
-}
-
-const getLevelBonus = (level: number): number => {
-  switch (level) {
-    case 1: return 0
-    case 2: return 0.01
-    case 3: return 0.03
-    case 4: return 0.05
-    case 5: return 0.07
-    case 6: return 0.10
-    default: return 0
-  }
-}
-
-const getPaymentMethodBonus = (method: string): number => {
-  switch (method?.toLowerCase()) {
-    case 'paypal': return 0.28
-    case 'google pay': return 0.25
-    case 'apple pay': return 0.15
-    case '2766': return 0
-    default: return 0
-  }
 }
 
 export default function TransactionHistory() {
@@ -158,9 +134,7 @@ export default function TransactionHistory() {
                 
                 <div className="flex justify-between items-center">
                   <span className="text-gray-600">Amount to Receive:</span>
-                  <span className="font-bold custom-purple-text">
-                    ${(amount * (user.baseprice + getLevelBonus(user.level) + getPaymentMethodBonus(user.paymentMethod))).toFixed(2)}
-                  </span>
+                  <span className="font-bold custom-purple-text">${(amount * 0.65).toFixed(2)}</span>
                 </div>
                 
                 <div className="flex justify-between items-center">
