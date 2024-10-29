@@ -26,6 +26,7 @@ model User {
   baseprice      Float     @default(0.15)
   piaddress      String[]  @default([])   // New field for Pi wallet address
   istransaction  Boolean   @default(false)
+  transactionStatus String[] @default([])
   createdAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
 }
