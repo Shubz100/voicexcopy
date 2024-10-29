@@ -137,7 +137,7 @@ export default function AdminTransactions() {
   const groupedTransactions: { [key: string]: User[] } = users.reduce((acc, user) => {
   user.transactionStatus.forEach((status, index) => {
     if (!acc[status]) {
-      acc[status] = [];
+      acc[status] = []
     }
     acc[status].push({
       telegramId: user.telegramId,
@@ -145,16 +145,19 @@ export default function AdminTransactions() {
       piAmount: [user.piAmount[index]],
       transactionStatus: [status],
       paymentMethod: [user.paymentMethod[index]],
-      paymentAddress: [user.paymentAddress[index]]
-    });
-  });
-  return acc;
-}, {} as { [key: string]: User[] });
+      paymentAddress: [user.paymentAddress[index]],
+    })
+  })
+  return acc
+}, {} as { [key: string]: User[] })
 
-  const statusCounts: { [key: string]: number } = Object.keys(groupedTransactions).reduce((acc, status) => {
+  const statusCounts: { [key: string]: number } = Object.keys(groupedTransactions).reduce(
+  (acc: { [key: string]: number }, status: string) => {
     acc[status] = groupedTransactions[status].length
     return acc
-  }, {});
+  },
+  {}
+)
 
   return (
     <div className="container">
