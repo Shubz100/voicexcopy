@@ -164,7 +164,7 @@ export default function Summary() {
         </div>
 
         {/* Back to Home Button */}
-        <Link href="/adminpannel">
+        <Link href="/">
           <button className="bg-[#670773] text-white text-xl font-bold py-3 px-12 rounded-full mt-8 shadow-lg hover-scale animate-fade-in">
             Back to Home
           </button>
