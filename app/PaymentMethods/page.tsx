@@ -4,30 +4,25 @@ import React, { useState, useRef, ChangeEvent, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Script from 'next/script';
 
-interface PaymentMethod {
-  id: string;
-  label: string;
-  placeholder: string;
-  image: string;
-  badge?: string;
-}
-
-const paymentMethods: PaymentMethod[] = [
+const paymentMethods = [
   {
     id: 'paypal',
     label: 'PayPal',
+    bonus: 0.28,
     placeholder: 'Enter PayPal address',
     image: 'https://storage.googleapis.com/a1aa/image/LM00lHy4e4VEfEwshfXBUMcJYM0B328inIsGRj7TYfhafrHdC.jpg',
   },
   {
     id: 'googlepay',
     label: 'Google Pay',
+    bonus: 0.25,
     placeholder: 'Enter Google Pay address',
     image: 'https://storage.googleapis.com/a1aa/image/SvKY98RDkvYhENmLE9Ukt5u94yGsWNixkJM5U691UbdeveoTA.jpg',
   },
   {
     id: 'applepay',
     label: 'Apple Pay',
+    bonus: 0.15,
     placeholder: 'Enter Apple Pay address',
     image: 'https://storage.googleapis.com/a1aa/image/YqpCh7xg0Ab9N17SKmdPm6cBYfCqsSwebOnsx553IeS1f1jOB.jpg',
     badge: 'High Rate'
@@ -35,10 +30,23 @@ const paymentMethods: PaymentMethod[] = [
   {
     id: 'mastercard',
     label: '•••• 2766',
+    bonus: 0,
     placeholder: 'Enter Mastercard details',
     image: 'https://storage.googleapis.com/a1aa/image/XBvmqXf3efCHMIrLcbgQfNciUh1kUfjmogYgjIg8xeoIeveoTA.jpg',
   },
 ];
+
+const getLevelBonus = (level: number): number => {
+  const bonuses = {
+    1: 0,
+    2: 0.01,
+    3: 0.03,
+    4: 0.05,
+    5: 0.07,
+    6: 0.01
+  };
+  return bonuses[level as keyof typeof bonuses] || 0;
+};
 
 const MergedPaymentPage = () => {
   const router = useRouter();
@@ -50,6 +58,8 @@ const MergedPaymentPage = () => {
   const [piAddress, setPiAddress] = useState<string>('');
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [paymentAddress, setPaymentAddress] = useState<string>('');
+  const [userLevel, setUserLevel] = useState<number>(1);
+  const [basePrice, setBasePrice] = useState<number>(0.15);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -74,6 +84,8 @@ const MergedPaymentPage = () => {
       const userData = await response.json();
       setImageUploaded(userData.isUpload || false);
       setImageUrl(userData.imageUrl || null);
+      setUserLevel(userData.level || 1);
+      setBasePrice(userData.baseprice || 0.15);
       if (userData.piaddress) {
         setPiAddress(userData.piaddress[userData.piaddress.length - 1]);
       }
@@ -137,51 +149,48 @@ const MergedPaymentPage = () => {
 
   const calculateUSDT = (pi: string): string => {
     const amount = parseFloat(pi);
-    return amount ? (amount * 0.65).toFixed(2) : '0.00';
+    if (!amount) return '0.00';
+    
+    const selectedMethod = paymentMethods.find(m => m.id === selectedPayment);
+    const paymentBonus = selectedMethod?.bonus || 0;
+    const levelBonus = getLevelBonus(userLevel);
+    const totalRate = basePrice + paymentBonus + levelBonus;
+    
+    return (amount * totalRate).toFixed(2);
   };
 
   const handleContinue = async () => {
-  if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
-    try {
-      // Update transaction status to processing
-      await fetch('/api/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: telegramId,
-          newTransaction: true  // This flag tells the API to add 'processing' status
-        })
-      });
+    if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
+      try {
+        // Save payment method data
+        await fetch('/api/payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId,
+            paymentMethod: selectedPayment,
+            paymentAddress
+          })
+        });
 
-      // Save payment method data
-      await fetch('/api/payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegramId,
-          paymentMethod: selectedPayment,
-          paymentAddress
-        })
-      });
-
-      // Save Pi amount and address
-      await fetch('/api/piamount', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegramId,
-          amount: piAmount,
-          imageUrl: imageUrl,
-          piaddress: piAddress
-        })
-      });
-      
-      router.push('/summary');
-    } catch (error) {
-      console.error('Error saving data:', error);
+        // Save Pi amount and address
+        await fetch('/api/piamount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId,
+            amount: piAmount,
+            imageUrl: imageUrl,
+            piaddress: piAddress
+          })
+        });
+        
+        router.push('/summary');
+      } catch (error) {
+        console.error('Error saving data:', error);
+      }
     }
-  }
-};
+  };
 
   const isButtonEnabled = piAmount && imageUploaded && piAddress && selectedPayment && paymentAddress;
 
@@ -210,11 +219,7 @@ const MergedPaymentPage = () => {
                 onClick={handleCopyAddress}
                 className="bg-[#670773] text-white p-2 rounded-lg hover:bg-[#7a1b86] transition-colors"
               >
-                {copied ? (
-                  <i className="fas fa-check text-lg"></i>
-                ) : (
-                  <i className="fas fa-copy text-lg"></i>
-                )}
+                <i className={`fas ${copied ? 'fa-check' : 'fa-copy'} text-lg`}></i>
               </button>
             </div>
           </div>
@@ -243,18 +248,27 @@ const MergedPaymentPage = () => {
             <h2 className="text-lg font-semibold text-[#670773] mb-3">
               Choose Your Payment Method
             </h2>
-            <select
-              value={selectedPayment}
-              onChange={(e) => setSelectedPayment(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4"
-            >
-              <option value="">Select payment method</option>
-              {paymentMethods.map((method) => (
-                <option key={method.id} value={method.id}>
-                  {method.label}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={selectedPayment}
+                onChange={(e) => setSelectedPayment(e.target.value)}
+                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 appearance-none"
+              >
+                <option value="">Select payment method</option>
+                {paymentMethods.map((method) => (
+                  <option key={method.id} value={method.id} className="flex items-center">
+                    {method.label} {method.badge && `(${method.badge})`}
+                  </option>
+                ))}
+              </select>
+              {selectedPayment && (
+                <img
+                  src={paymentMethods.find(m => m.id === selectedPayment)?.image}
+                  alt="Payment method"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 object-contain"
+                />
+              )}
+            </div>
             {selectedPayment && (
               <input
                 type="text"
