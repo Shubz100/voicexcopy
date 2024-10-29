@@ -33,7 +33,7 @@ export default function Home() {
       window.location.href = './transaction-history'
     } else if (item === 'Profile') {
       window.location.href = './profile'
-      else if (item === 'Invite & Earn') {
+    } else if (item === 'Invite & Earn') {
       window.location.href = './invite'
     } else if (item === 'Admin') {
       window.location.href = './admin/transactions'
