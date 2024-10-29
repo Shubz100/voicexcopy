@@ -15,9 +15,43 @@ declare global {
 
 interface UserData {
   piAmount: number[]
-  paymentMethod: string
-  paymentAddress: string
-  piaddress: string
+  paymentMethod: string[]
+  paymentAddress: string[]
+  piaddress: string[]
+  baseprice: number
+  level: number
+}
+
+const getPaymentBonus = (paymentMethod: string): number => {
+  switch (paymentMethod.toLowerCase()) {
+    case 'paypal':
+      return 0.28
+    case 'googlepay':
+      return 0.25
+    case 'applepay':
+      return 0.15
+    case 'mastercard':
+      return 0
+    default:
+      return 0
+  }
+}
+
+const getLevelBonus = (level: number): number => {
+  switch (level) {
+    case 2:
+      return 0.01
+    case 3:
+      return 0.03
+    case 4:
+      return 0.05
+    case 5:
+      return 0.07
+    case 6:
+      return 0.01
+    default:
+      return 0
+  }
 }
 
 export default function Summary() {
@@ -78,7 +112,16 @@ export default function Summary() {
   }
 
   const latestPiAmount = userData?.piAmount[userData.piAmount.length - 1] || 0
-  const amountToReceive = latestPiAmount * 0.65
+  const latestPaymentMethod = userData?.paymentMethod[userData.paymentMethod.length - 1] || ''
+  const latestPaymentAddress = userData?.paymentAddress[userData.paymentAddress.length - 1] || ''
+  const latestPiAddress = userData?.piaddress[userData.piaddress.length - 1] || ''
+  
+  const paymentBonus = getPaymentBonus(latestPaymentMethod)
+  const levelBonus = getLevelBonus(userData?.level || 1)
+  const basePrice = userData?.baseprice || 0.15
+  
+  const pricePerPi = basePrice + paymentBonus + levelBonus
+  const amountToReceive = latestPiAmount * pricePerPi
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -114,26 +157,31 @@ export default function Summary() {
             </div>
             
             <div className="flex justify-between items-center border-b pb-2">
+              <span className="text-gray-600">Price per Pi:</span>
+              <span className="font-semibold text-[#670773]">${pricePerPi.toFixed(2)}</span>
+            </div>
+            
+            <div className="flex justify-between items-center border-b pb-2">
               <span className="text-gray-600">Amount to be Received:</span>
               <span className="font-semibold text-[#670773]">${amountToReceive.toFixed(2)}</span>
             </div>
             
             <div className="flex justify-between items-center border-b pb-2">
               <span className="text-gray-600">Payment Method:</span>
-              <span className="font-semibold text-[#670773]">{userData?.paymentMethod || 'N/A'}</span>
+              <span className="font-semibold text-[#670773]">{latestPaymentMethod || 'N/A'}</span>
             </div>
             
             <div className="flex justify-between items-center border-b pb-2">
               <span className="text-gray-600">Payment Address:</span>
               <span className="font-semibold text-[#670773] break-all text-sm">
-                {userData?.paymentAddress || 'N/A'}
+                {latestPaymentAddress || 'N/A'}
               </span>
             </div>
             
             <div className="flex justify-between items-center border-b pb-2">
               <span className="text-gray-600">Pi Wallet Address:</span>
               <span className="font-semibold text-[#670773] break-all text-sm">
-                {userData?.piaddress || 'N/A'}
+                {latestPiAddress || 'N/A'}
               </span>
             </div>
           </div>
@@ -150,7 +198,7 @@ export default function Summary() {
         </div>
 
         {/* Back to Home Button */}
-        <Link href="/adminpannel">
+        <Link href="/">
           <button className="bg-[#670773] text-white text-xl font-bold py-3 px-12 rounded-full mt-8 shadow-lg hover-scale animate-fade-in">
             Back to Home
           </button>
