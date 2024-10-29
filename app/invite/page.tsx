@@ -1,3 +1,5 @@
+'use client'
+
 import React, { useState, useEffect, useRef } from 'react';
 import { prisma } from '@/lib/prisma';
 
@@ -77,9 +79,6 @@ const InvitePage = () => {
         where: { telegramId: user.telegramId },
         data: {
           points: {
-            increment: 2500,
-          },
-          totalPoints: {
             increment: 2500,
           },
         },
