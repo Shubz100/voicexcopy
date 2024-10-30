@@ -28,9 +28,7 @@ interface User {
   transactionStatus: string[]
   piaddress: string[]
   level: number
-  points: number
   totalPiSold: number
-  xp: number
   baseprice: number
 }
 
@@ -73,6 +71,16 @@ const calculateAmount = (piAmount: number, paymentMethod: string, level: number,
   return piAmount * pricePerPi
 }
 
+// Calculate total from completed transactions only
+const calculateCompletedTotal = (user: User) => {
+  return user.piAmount.reduce((total, amount, index) => {
+    if (user.transactionStatus[index]?.toLowerCase() === 'completed') {
+      total += amount
+    }
+    return total
+  }, 0)
+}
+
 export default function TransactionHistory() {
   const [user, setUser] = useState<User | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -101,7 +109,12 @@ export default function TransactionHistory() {
             if (data.error) {
               setError(data.error)
             } else {
-              setUser(data)
+              // Calculate total from completed transactions
+              const totalPiSold = calculateCompletedTotal(data)
+              setUser({
+                ...data,
+                totalPiSold
+              })
             }
           })
           .catch((err) => {
@@ -212,14 +225,6 @@ export default function TransactionHistory() {
           <div className="flex justify-between items-center">
             <span className="text-gray-600">Total Pi Sold:</span>
             <span className="font-bold custom-purple-text">{user.totalPiSold} Pi</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">Points:</span>
-            <span className="font-bold custom-purple-text">{user.points}</span>
-          </div>
-          <div className="flex justify-between items-center">
-            <span className="text-gray-600">XP:</span>
-            <span className="font-bold custom-purple-text">{user.xp}</span>
           </div>
         </div>
       </div>
