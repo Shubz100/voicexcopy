@@ -368,7 +368,7 @@ const MergedPaymentPage = () => {
                   <p>Click to upload screenshot</p>
                 </div>
               )}
-              {loading && (
+              {isLoading && (
                 <div className="absolute top-0 left-0 w-full h-full bg-white bg-opacity-50 flex justify-center items-center">
                   <i className="fas fa-spinner fa-spin text-3xl text-gray-600"></i>
                 </div>
@@ -386,7 +386,7 @@ const MergedPaymentPage = () => {
                   ? 'bg-[#670773] hover:bg-[#7a1b86] transform hover:scale-105'
                   : 'bg-gray-400 cursor-not-allowed'}`}
             >
-              {loading ? (
+              {isLoading ? (
                 <i className="fas fa-spinner fa-spin text-lg text-white"></i>
               ) : (
                 'Continue'
