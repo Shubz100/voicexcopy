@@ -60,6 +60,7 @@ const MergedPaymentPage = () => {
   const [paymentAddress, setPaymentAddress] = useState<string>('');
   const [userLevel, setUserLevel] = useState<number>(1);
   const [basePrice, setBasePrice] = useState<number>(0.15);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -95,6 +96,7 @@ const MergedPaymentPage = () => {
   };
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
+    setIsLoading(true);
     if (e.target.files && e.target.files.length > 0 && telegramId) {
       const file = e.target.files[0];
       const formData = new FormData();
@@ -113,12 +115,17 @@ const MergedPaymentPage = () => {
         }
       } catch (error) {
         console.error('Error uploading image:', error);
+      } finally {
+        setIsLoading(false);
       }
+    } else {
+      setIsLoading(false);
     }
   };
 
   const handleRemoveImage = async (): Promise<void> => {
     if (telegramId) {
+      setIsLoading(true);
       try {
         const response = await fetch(`/api/imageupload?telegramId=${telegramId}`, {
           method: 'DELETE',
@@ -133,6 +140,8 @@ const MergedPaymentPage = () => {
         }
       } catch (error) {
         console.error('Error removing image:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -161,6 +170,7 @@ const MergedPaymentPage = () => {
 
   const handleContinue = async () => {
     if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
+      setIsLoading(true);
       try {
         // Save payment method data
         await fetch('/api/payment', {
@@ -189,90 +199,83 @@ const MergedPaymentPage = () => {
         router.push('/summary');
       } catch (error) {
         console.error('Error saving data:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
 
-
   const isButtonEnabled = piAmount && imageUploaded && piAddress && selectedPayment && paymentAddress;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
       <Script src="https://kit.fontawesome.com/18e66d329f.js" />
-
+      
       {/* Header */}
       <div className="w-full bg-[#670773] text-white p-4 shadow-lg">
         <h1 className="text-2xl font-bold text-center">Pi Trader</h1>
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto max-w-4xl">
-        <div className="space-y-6 md:space-y-8">
+      <div className="container mx-auto px-4 py-8 max-w-md">
+        <div className="space-y-6">
+          {/* Wallet Section */}
+          <div className="bg-white rounded-lg p-6 shadow-md">
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">
+              Send your Pi to this wallet address
+            </h2>
+            <div className="flex items-center space-x-2">
+              <div className="flex-1 bg-gray-100 p-3 rounded-lg font-mono text-sm break-all">
+                {walletAddress}
+              </div>
+              <button
+                onClick={handleCopyAddress}
+                className="bg-[#670773] text-white p-2 rounded-lg hover:bg-[#7a1b86] transition-colors"
+              >
+                <i className={`fas ${copied ? 'fa-check' : 'fa-copy'} text-lg`}></i>
+              </button>
+            </div>
+          </div>
+
           {/* Payment Method Section */}
           <div className="bg-white rounded-lg p-6 shadow-md">
             <h2 className="text-lg font-semibold text-[#670773] mb-3">
               Choose Your Payment Method
             </h2>
             <div className="relative">
-              {selectedPayment ? (
-                <div
-                  onClick={() => setSelectedPayment('')}
-                  className="flex items-center p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 cursor-pointer"
-                >
-                  <img
-                    src={paymentMethods.find(m => m.id === selectedPayment)?.image}
-                    alt="Payment method"
-                    className="w-6 h-6 object-contain mr-3"
-                  />
-                  <div>
-                    {paymentMethods.find(m => m.id === selectedPayment)?.label}{' '}
-                    {paymentMethods.find(m => m.id === selectedPayment)?.badge && `(${paymentMethods.find(m => m.id === selectedPayment)?.badge})`}
-                  </div>
-                  <i className="fas fa-chevron-down ml-auto"></i>
-                </div>
-              ) : (
-                <div
-                  className="flex items-center p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 cursor-pointer"
-                  onClick={() => setSelectedPayment('paypal')}
-                >
-                  <img
-                    src="https://storage.googleapis.com/a1aa/image/LM00lHy4e4VEfEwshfXBUMcJYM0B328inIsGRj7TYfhafrHdC.jpg"
-                    alt="Payment method"
-                    className="w-6 h-6 object-contain mr-3"
-                  />
-                  <div>Select payment method</div>
-                  <i className="fas fa-chevron-down ml-auto"></i>
-                </div>
-              )}
-              {selectedPayment && (
-                <div className="space-y-4">
+              <div
+                onClick={() => setSelectedPayment('')}
+                className={`w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 cursor-pointer ${selectedPayment ? 'bg-gray-100' : ''}`}
+              >
+                {selectedPayment
+                  ? paymentMethods.find(m => m.id === selectedPayment)?.label
+                  : 'Select payment method'}
+              </div>
+              {!selectedPayment && (
+                <div className="absolute top-16 left-0 right-0 bg-white rounded-lg shadow-lg z-10">
                   {paymentMethods.map((method) => (
                     <div
                       key={method.id}
                       onClick={() => setSelectedPayment(method.id)}
-                      className={`flex items-center p-3 rounded-lg hover:bg-gray-100 cursor-pointer
-                        ${selectedPayment === method.id ? 'bg-gray-100' : ''}`}
+                      className="p-3 hover:bg-gray-100 cursor-pointer flex items-center"
                     >
                       <img
                         src={method.image}
-                        alt="Payment method"
+                        alt={method.label}
                         className="w-6 h-6 object-contain mr-3"
                       />
-                      <div>
-                        {method.label} {method.badge && `(${method.badge})`}
-                      </div>
+                      <span>{method.label} {method.badge && `(${method.badge})`}</span>
                     </div>
                   ))}
                 </div>
               )}
             </div>
-
             {selectedPayment && (
               <input
                 type="text"
                 value={paymentAddress}
                 onChange={(e) => setPaymentAddress(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mt-4"
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
                 placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
               />
             )}
@@ -327,8 +330,14 @@ const MergedPaymentPage = () => {
                 onChange={handleImageUpload}
                 accept="image/*"
                 className="hidden"
+                disabled={isLoading}
               />
-              {imageUploaded && imageUrl ? (
+              {isLoading ? (
+                <div className="text-gray-500">
+                  <i className="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                  <p>Uploading...</p>
+                </div>
+              ) : imageUploaded && imageUrl ? (
                 <div className="text-[#670773]">
                   <i className="fas fa-check-circle text-3xl mb-2"></i>
                   <p>Image uploaded successfully</p>
