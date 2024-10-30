@@ -62,7 +62,7 @@ const MergedPaymentPage = () => {
   const [basePrice, setBasePrice] = useState<number>(0.15);
   const [showPaymentMethods, setShowPaymentMethods] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
+  const walletAddress = 'GATPLIJ4UWOSDUOLOM2ZZGSWOJ4EKYUQ4GX3EX4U2XH2CVQVMCJ7MI47';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
