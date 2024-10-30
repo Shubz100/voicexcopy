@@ -224,7 +224,7 @@ const MergedPaymentPage = () => {
               Send your Pi to this wallet address
             </h2>
             <div className="flex items-center space-x-2">
-              <div className="flex-1 bg-gray-100 p-3 rounded-lg font-mono text-sm break-all">
+              <div className="flex-1 bg-gray-100 p-3 rounded-lg font-mono text-sm break-all text-black">
                 {walletAddress}
               </div>
               <button
