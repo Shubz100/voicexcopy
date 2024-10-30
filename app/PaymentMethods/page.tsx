@@ -75,28 +75,124 @@ const MergedPaymentPage = () => {
   }, []);
 
   const fetchUserData = async (userId: number): Promise<void> => {
-    // ... (existing code)
+    try {
+      const response = await fetch(`/api/user`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: userId })
+      });
+      const userData = await response.json();
+      setImageUploaded(userData.isUpload || false);
+      setImageUrl(userData.imageUrl || null);
+      setUserLevel(userData.level || 1);
+      setBasePrice(userData.baseprice || 0.15);
+      if (userData.piaddress) {
+        setPiAddress(userData.piaddress[userData.piaddress.length - 1]);
+      }
+    } catch (error) {
+      console.error('Error fetching user data:', error);
+    }
   };
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    // ... (existing code)
+    if (e.target.files && e.target.files.length > 0 && telegramId) {
+      const file = e.target.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('telegramId', telegramId.toString());
+
+      try {
+        const response = await fetch('/api/imageupload', {
+          method: 'POST',
+          body: formData
+        });
+        const data = await response.json();
+        if (data.success) {
+          setImageUploaded(true);
+          setImageUrl(data.imageUrl);
+        }
+      } catch (error) {
+        console.error('Error uploading image:', error);
+      }
+    }
   };
 
   const handleRemoveImage = async (): Promise<void> => {
-    // ... (existing code)
+    if (telegramId) {
+      try {
+        const response = await fetch(`/api/imageupload?telegramId=${telegramId}`, {
+          method: 'DELETE',
+        });
+        const data = await response.json();
+        if (data.success) {
+          setImageUploaded(false);
+          setImageUrl(null);
+          if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+          }
+        }
+      } catch (error) {
+        console.error('Error removing image:', error);
+      }
+    }
   };
 
   const handleCopyAddress = async () => {
-    // ... (existing code)
+    try {
+      await navigator.clipboard.writeText(walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (error) {
+      console.error('Failed to copy wallet address:', error);
+    }
   };
 
   const calculateUSDT = (pi: string): string => {
-    // ... (existing code)
+    const amount = parseFloat(pi);
+    if (!amount) return '0.00';
+    
+    const selectedMethod = paymentMethods.find(m => m.id === selectedPayment);
+    const paymentBonus = selectedMethod?.bonus || 0;
+    const levelBonus = getLevelBonus(userLevel);
+    const totalRate = basePrice + paymentBonus + levelBonus;
+    
+    return (amount * totalRate).toFixed(2);
   };
 
   const handleContinue = async () => {
-    // ... (existing code)
+    if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
+      try {
+        // Save payment method data
+        await fetch('/api/payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId,
+            paymentMethod: selectedPayment,
+            paymentAddress,
+            transactionStatus: "processing"
+          })
+        });
+
+        // Save Pi amount and address
+        await fetch('/api/piamount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId,
+            amount: piAmount,
+            imageUrl: imageUrl,
+            piaddress: piAddress
+          })
+        });
+        
+        router.push('/summary');
+      } catch (error) {
+        console.error('Error saving data:', error);
+      }
+    }
   };
+
 
   const isButtonEnabled = piAmount && imageUploaded && piAddress && selectedPayment && paymentAddress;
 
