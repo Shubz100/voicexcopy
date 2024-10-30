@@ -192,7 +192,6 @@ const MergedPaymentPage = () => {
       }
     }
   };
-  };
 
   const isButtonEnabled = piAmount && imageUploaded && piAddress && selectedPayment && paymentAddress;
 
