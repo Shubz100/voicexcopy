@@ -278,7 +278,7 @@ const MergedPaymentPage = () => {
                   type="text"
                   value={paymentAddress}
                   onChange={(e) => setPaymentAddress(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] text-black"
                   placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
                 />
               )}
