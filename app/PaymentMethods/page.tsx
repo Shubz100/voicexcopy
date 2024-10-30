@@ -58,25 +58,25 @@ const MergedPaymentPage = () => {
   const [piAddress, setPiAddress] = useState<string>('');
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [paymentAddress, setPaymentAddress] = useState<string>('');
-  const [userLevel, setUser Level] = useState<number>(1);
+  const [userLevel, setUserLevel] = useState<number>(1);
   const [basePrice, setBasePrice] = useState<number>(0.15);
+  const [showPaymentMethods, setShowPaymentMethods] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [loading, setLoading] = useState<boolean>(false);
-  const [showPaymentMethods, setShowPaymentMethods] = useState<boolean>(false);
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     if (tg) {
-      const webAppUser  = tg.initDataUnsafe?.user;
-      if (webAppUser ) {
-        setTelegramId(webAppUser .id);
-        fetchUser Data(webAppUser .id);
+      const webAppUser = tg.initDataUnsafe?.user;
+      if (webAppUser) {
+        setTelegramId(webAppUser.id);
+        fetchUserData(webAppUser.id);
       }
     }
   }, []);
 
-  const fetchUser Data = async (userId: number): Promise<void> => {
+  const fetchUserData = async (userId: number): Promise<void> => {
     try {
       const response = await fetch(`/api/user`, {
         method: 'POST',
@@ -86,10 +86,10 @@ const MergedPaymentPage = () => {
       const userData = await response.json();
       setImageUploaded(userData.isUpload || false);
       setImageUrl(userData.imageUrl || null);
-      setUser Level(userData.level || 1);
+      setUserLevel(userData.level || 1);
       setBasePrice(userData.baseprice || 0.15);
       if (userData.piaddress) {
-        setPiAddress(userData.piaddress[userData.pi address.length - 1]);
+        setPiAddress(userData.piaddress[userData.piaddress.length - 1]);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -98,7 +98,7 @@ const MergedPaymentPage = () => {
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
     if (e.target.files && e.target.files.length > 0 && telegramId) {
-      setLoading(true);
+      setIsLoading(true);
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('file', file);
@@ -117,13 +117,14 @@ const MergedPaymentPage = () => {
       } catch (error) {
         console.error('Error uploading image:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
   };
 
   const handleRemoveImage = async (): Promise<void> => {
     if (telegramId) {
+      setIsLoading(true);
       try {
         const response = await fetch(`/api/imageupload?telegramId=${telegramId}`, {
           method: 'DELETE',
@@ -138,6 +139,8 @@ const MergedPaymentPage = () => {
         }
       } catch (error) {
         console.error('Error removing image:', error);
+      } finally {
+        setIsLoading(false);
       }
     }
   };
@@ -166,7 +169,7 @@ const MergedPaymentPage = () => {
 
   const handleContinue = async () => {
     if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
-      setLoading(true);
+      setIsLoading(true);
       try {
         // Save payment method data
         await fetch('/api/payment', {
@@ -196,7 +199,7 @@ const MergedPaymentPage = () => {
       } catch (error) {
         console.error('Error saving data:', error);
       } finally {
-        setLoading(false);
+        setIsLoading(false);
       }
     }
   };
@@ -239,29 +242,33 @@ const MergedPaymentPage = () => {
               Choose Your Payment Method
             </h2>
             <div className="relative">
-              <button
+              <div
+                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 flex items-center justify-between cursor-pointer"
                 onClick={() => setShowPaymentMethods(!showPaymentMethods)}
-                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 appearance-none"
               >
-                {selectedPayment ? paymentMethods.find(m => m.id === selectedPayment)?.label : 'Select payment method'}
-              </button>
+                {selectedPayment
+                  ? paymentMethods.find(m => m.id === selectedPayment)?.label
+                  : 'Select payment method'}
+                <i className={`fas ${showPaymentMethods ? 'fa-chevron-up' : 'fa-chevron-down'} text-gray-500`}></i>
+              </div>
               {showPaymentMethods && (
-                <div className="absolute top-12 left-0 w-full bg-white rounded-lg shadow-md p-4">
+                <div className="absolute z-10 w-full bg-white rounded-lg shadow-lg border border-gray-300 mt-1">
                   {paymentMethods.map((method) => (
-                    <div key={method.id} className="flex items-center mb-2">
-                      <input
-                        type="radio"
-                        name="paymentMethod"
-                        value={method.id}
-                        onChange={(e) => setSelectedPayment(e.target.value)}
-                        className="mr-2"
+                    <div
+                      key={method.id}
+                      className="p-3 hover:bg-gray-100 cursor-pointer flex items-center"
+                      onClick={() => {
+                        setSelectedPayment(method.id);
+                        setPaymentAddress('');
+                        setShowPaymentMethods(false);
+                      }}
+                    >
+                      <img
+                        src={method.image}
+                        alt={method.label}
+                        className="w-6 h-6 object-contain mr-3"
                       />
-                      <label className="text-gray-600">{method.label}</label>
-                      {method.badge && (
-                        <span className="bg-orange-100 text-orange-800 text-xs font-bold mr-2 px-2.5 py-0.5 rounded">
-                          {method.badge}
-                        </span>
-                      )}
+                      <span>{method.label} {method.badge && `(${method.badge})`}</span>
                     </div>
                   ))}
                 </div>
@@ -328,7 +335,12 @@ const MergedPaymentPage = () => {
                 accept="image/*"
                 className="hidden"
               />
-              {imageUploaded && imageUrl ? (
+              {isLoading ? (
+                <div className="text-[#670773]">
+                  <i className="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                  <p>Uploading...</p>
+                </div>
+              ) : imageUploaded && imageUrl ? (
                 <div className="text-[#670773]">
                   <i className="fas fa-check-circle text-3xl mb-2"></i>
                   <p>Image uploaded successfully</p>
@@ -348,7 +360,7 @@ const MergedPaymentPage = () => {
                     className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                   >
                     Remove
-                  </ button>
+                  </button>
                 </div>
               ) : (
                 <div className="text-gray-500">
