@@ -294,7 +294,7 @@ const MergedPaymentPage = () => {
               type="number"
               value={piAmount}
               onChange={(e) => setPiAmount(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] text-black"
               placeholder="Enter amount"
             />
             {piAmount && (
