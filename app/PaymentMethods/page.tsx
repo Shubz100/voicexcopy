@@ -7,31 +7,31 @@ import Script from 'next/script';
 const paymentMethods = [
   {
     id: 'paypal',
-    label: 'PayPal',
+    label: 'Binance',
     bonus: 0.28,
-    placeholder: 'Enter PayPal address',
+    placeholder: 'Enter Binance UID',
     image: 'https://storage.googleapis.com/a1aa/image/LM00lHy4e4VEfEwshfXBUMcJYM0B328inIsGRj7TYfhafrHdC.jpg',
+    badge: 'High Rate'
   },
   {
     id: 'googlepay',
-    label: 'Google Pay',
+    label: 'Trust Wallet',
     bonus: 0.25,
-    placeholder: 'Enter Google Pay address',
+    placeholder: 'Enter USDT TRC-20 Address',
     image: 'https://storage.googleapis.com/a1aa/image/SvKY98RDkvYhENmLE9Ukt5u94yGsWNixkJM5U691UbdeveoTA.jpg',
   },
   {
     id: 'applepay',
-    label: 'Apple Pay',
+    label: 'KuCoin',
     bonus: 0.15,
-    placeholder: 'Enter Apple Pay address',
+    placeholder: 'Enter KuCoin UID',
     image: 'https://storage.googleapis.com/a1aa/image/YqpCh7xg0Ab9N17SKmdPm6cBYfCqsSwebOnsx553IeS1f1jOB.jpg',
-    badge: 'High Rate'
   },
   {
     id: 'mastercard',
-    label: '•••• 2766',
+    label: 'UPI (Lowest Rate)',
     bonus: 0,
-    placeholder: 'Enter Mastercard details',
+    placeholder: 'Enter UPI Address',
     image: 'https://storage.googleapis.com/a1aa/image/XBvmqXf3efCHMIrLcbgQfNciUh1kUfjmogYgjIg8xeoIeveoTA.jpg',
   },
 ];
