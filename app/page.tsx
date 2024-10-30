@@ -156,7 +156,7 @@ export default function Home() {
         <div className="flex-1 flex items-center justify-center">
           <div className="relative w-48 h-48">
             <img 
-              src="/api/placeholder/400/320" 
+              src="/public/binance.jpg" 
               alt="Pi Coin" 
               className="w-full h-full object-cover rounded-full shadow-xl"
             />
