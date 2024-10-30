@@ -60,8 +60,6 @@ const MergedPaymentPage = () => {
   const [paymentAddress, setPaymentAddress] = useState<string>('');
   const [userLevel, setUserLevel] = useState<number>(1);
   const [basePrice, setBasePrice] = useState<number>(0.15);
-  const [showPaymentMethods, setShowPaymentMethods] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -98,7 +96,6 @@ const MergedPaymentPage = () => {
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
     if (e.target.files && e.target.files.length > 0 && telegramId) {
-      setIsLoading(true);
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('file', file);
@@ -116,15 +113,12 @@ const MergedPaymentPage = () => {
         }
       } catch (error) {
         console.error('Error uploading image:', error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
 
   const handleRemoveImage = async (): Promise<void> => {
     if (telegramId) {
-      setIsLoading(true);
       try {
         const response = await fetch(`/api/imageupload?telegramId=${telegramId}`, {
           method: 'DELETE',
@@ -139,8 +133,6 @@ const MergedPaymentPage = () => {
         }
       } catch (error) {
         console.error('Error removing image:', error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -169,7 +161,6 @@ const MergedPaymentPage = () => {
 
   const handleContinue = async () => {
     if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
-      setIsLoading(true);
       try {
         // Save payment method data
         await fetch('/api/payment', {
@@ -198,8 +189,6 @@ const MergedPaymentPage = () => {
         router.push('/summary');
       } catch (error) {
         console.error('Error saving data:', error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -236,55 +225,6 @@ const MergedPaymentPage = () => {
             </div>
           </div>
 
-          {/* Payment Method Section */}
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              Choose Your Payment Method
-            </h2>
-            <div className="relative">
-              <div
-                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 flex items-center justify-between cursor-pointer"
-                onClick={() => setShowPaymentMethods(!showPaymentMethods)}
-              >
-                {selectedPayment
-                  ? paymentMethods.find(m => m.id === selectedPayment)?.label
-                  : 'Select payment method'}
-                <i className={`fas ${showPaymentMethods ? 'fa-chevron-up' : 'fa-chevron-down'} text-gray-500`}></i>
-              </div>
-              {showPaymentMethods && (
-                <div className="absolute z-10 w-full bg-white rounded-lg shadow-lg border border-gray-300 mt-1">
-                  {paymentMethods.map((method) => (
-                    <div
-                      key={method.id}
-                      className="p-3 hover:bg-gray-100 cursor-pointer flex items-center"
-                      onClick={() => {
-                        setSelectedPayment(method.id);
-                        setPaymentAddress('');
-                        setShowPaymentMethods(false);
-                      }}
-                    >
-                      <img
-                        src={method.image}
-                        alt={method.label}
-                        className="w-6 h-6 object-contain mr-3"
-                      />
-                      <span>{method.label} {method.badge && `(${method.badge})`}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {selectedPayment && (
-                <input
-                  type="text"
-                  value={paymentAddress}
-                  onChange={(e) => setPaymentAddress(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
-                  placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
-                />
-              )}
-            </div>
-          </div>
-
           {/* Amount Section */}
           <div className="bg-white rounded-lg p-6 shadow-md">
             <h2 className="text-lg font-semibold text-[#670773] mb-3">
@@ -301,6 +241,43 @@ const MergedPaymentPage = () => {
               <p className="mt-3 text-[#670773] font-medium">
                 You will receive {calculateUSDT(piAmount)} USDT
               </p>
+            )}
+          </div>
+
+          {/* Payment Method Section */}
+          <div className="bg-white rounded-lg p-6 shadow-md">
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">
+              Choose Your Payment Method
+            </h2>
+            <div className="relative">
+              <select
+                value={selectedPayment}
+                onChange={(e) => setSelectedPayment(e.target.value)}
+                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 appearance-none"
+              >
+                <option value="">Select payment method</option>
+                {paymentMethods.map((method) => (
+                  <option key={method.id} value={method.id} className="flex items-center">
+                    {method.label} {method.badge && `(${method.badge})`}
+                  </option>
+                ))}
+              </select>
+              {selectedPayment && (
+                <img
+                  src={paymentMethods.find(m => m.id === selectedPayment)?.image}
+                  alt="Payment method"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 object-contain"
+                />
+              )}
+            </div>
+            {selectedPayment && (
+              <input
+                type="text"
+                value={paymentAddress}
+                onChange={(e) => setPaymentAddress(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
+                placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
+              />
             )}
           </div>
 
@@ -335,36 +312,9 @@ const MergedPaymentPage = () => {
                 accept="image/*"
                 className="hidden"
               />
-              {isLoading ? (
-                <div className="text-[#670773]">
-                  <i className="fas fa-spinner fa-spin text-3xl mb-2"></i>
-                  <p>Uploading...</p>
-                </div>
-              ) : imageUploaded && imageUrl ? (
+              {imageUploaded && imageUrl ? (
                 <div className="text-[#670773]">
                   <i className="fas fa-check-circle text-3xl mb-2"></i>
-                  <p>Image uploaded successfully</p>
-                  <div className="mt-4 mb-4">
-                    <img 
-                      src={imageUrl} 
-                      alt="Payment proof" 
-                      className="max-w-full h-auto rounded-lg mx-auto"
-                      style={{ maxHeight: '200px' }}
-                    />
-                  </div>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleRemoveImage();
-                    }}
-                    className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                  >
-                    Remove
-                  </button>
-                </div>
-              ) : (
-                <div className="text-gray-500">
-                  <i className="fas fa-cloud-upload-alt text-3xl mb-2"></i>
                   <p>Image uploaded successfully</p>
                   <div className="mt-4 mb-4">
                     <img 
