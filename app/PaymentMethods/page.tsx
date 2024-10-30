@@ -7,7 +7,7 @@ import Script from 'next/script';
 const paymentMethods = [
   {
     id: 'paypal',
-    label: 'Binance',
+    label: 'Binance text-black',
     bonus: 0.28,
     placeholder: 'Enter Binance UID',
     image: 'https://i.imgur.com/iM5K2ey.jpg',
