@@ -10,7 +10,7 @@ const paymentMethods = [
     label: 'Binance',
     bonus: 0.28,
     placeholder: 'Enter Binance UID',
-    image: 'https://storage.googleapis.com/a1aa/image/LM00lHy4e4VEfEwshfXBUMcJYM0B328inIsGRj7TYfhafrHdC.jpg',
+    image: 'https://i.imgur.com/iM5K2ey.jpg',
     badge: 'High Rate'
   },
   {
@@ -18,21 +18,21 @@ const paymentMethods = [
     label: 'Trust Wallet',
     bonus: 0.25,
     placeholder: 'Enter USDT TRC-20 Address',
-    image: 'https://storage.googleapis.com/a1aa/image/SvKY98RDkvYhENmLE9Ukt5u94yGsWNixkJM5U691UbdeveoTA.jpg',
+    image: 'https://i.imgur.com/fZI0OD2.jpg',
   },
   {
     id: 'applepay',
     label: 'KuCoin',
     bonus: 0.15,
     placeholder: 'Enter KuCoin UID',
-    image: 'https://storage.googleapis.com/a1aa/image/YqpCh7xg0Ab9N17SKmdPm6cBYfCqsSwebOnsx553IeS1f1jOB.jpg',
+    image: 'https://i.imgur.com/jfjFkeA.jpg',
   },
   {
     id: 'mastercard',
     label: 'UPI (Lowest Rate)',
     bonus: 0,
     placeholder: 'Enter UPI Address',
-    image: 'https://storage.googleapis.com/a1aa/image/XBvmqXf3efCHMIrLcbgQfNciUh1kUfjmogYgjIg8xeoIeveoTA.jpg',
+    image: 'https://i.imgur.com/FK31xFx.jpg',
   },
 ];
 
@@ -313,7 +313,7 @@ const MergedPaymentPage = () => {
               type="text"
               value={piAddress}
               onChange={(e) => setPiAddress(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] text-black"
               placeholder="Enter your Pi wallet address"
             />
           </div>
