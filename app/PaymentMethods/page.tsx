@@ -7,7 +7,7 @@ import Script from 'next/script';
 const paymentMethods = [
   {
     id: 'paypal',
-    label: 'Binance text-black',
+    label: 'Binance',
     bonus: 0.28,
     placeholder: 'Enter Binance UID',
     image: 'https://i.imgur.com/iM5K2ey.jpg',
@@ -268,7 +268,8 @@ const MergedPaymentPage = () => {
                         alt={method.label}
                         className="w-6 h-6 object-contain mr-3"
                       />
-                      <span>{method.label} {method.badge && `(${method.badge})`}</span>
+                      <span className="text-black"> 
+                        {method.label} {method.badge && `(${method.badge})`}</span>
                     </div>
                   ))}
                 </div>
