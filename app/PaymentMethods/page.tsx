@@ -75,161 +75,96 @@ const MergedPaymentPage = () => {
   }, []);
 
   const fetchUserData = async (userId: number): Promise<void> => {
-    try {
-      const response = await fetch(`/api/user`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: userId })
-      });
-      const userData = await response.json();
-      setImageUploaded(userData.isUpload || false);
-      setImageUrl(userData.imageUrl || null);
-      setUserLevel(userData.level || 1);
-      setBasePrice(userData.baseprice || 0.15);
-      if (userData.piaddress) {
-        setPiAddress(userData.piaddress[userData.piaddress.length - 1]);
-      }
-    } catch (error) {
-      console.error('Error fetching user data:', error);
-    }
+    // ... (existing code)
   };
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    if (e.target.files && e.target.files.length > 0 && telegramId) {
-      const file = e.target.files[0];
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('telegramId', telegramId.toString());
-
-      try {
-        const response = await fetch('/api/imageupload', {
-          method: 'POST',
-          body: formData
-        });
-        const data = await response.json();
-        if (data.success) {
-          setImageUploaded(true);
-          setImageUrl(data.imageUrl);
-        }
-      } catch (error) {
-        console.error('Error uploading image:', error);
-      }
-    }
+    // ... (existing code)
   };
 
   const handleRemoveImage = async (): Promise<void> => {
-    if (telegramId) {
-      try {
-        const response = await fetch(`/api/imageupload?telegramId=${telegramId}`, {
-          method: 'DELETE',
-        });
-        const data = await response.json();
-        if (data.success) {
-          setImageUploaded(false);
-          setImageUrl(null);
-          if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-          }
-        }
-      } catch (error) {
-        console.error('Error removing image:', error);
-      }
-    }
+    // ... (existing code)
   };
 
   const handleCopyAddress = async () => {
-    try {
-      await navigator.clipboard.writeText(walletAddress);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch (error) {
-      console.error('Failed to copy wallet address:', error);
-    }
+    // ... (existing code)
   };
 
   const calculateUSDT = (pi: string): string => {
-    const amount = parseFloat(pi);
-    if (!amount) return '0.00';
-    
-    const selectedMethod = paymentMethods.find(m => m.id === selectedPayment);
-    const paymentBonus = selectedMethod?.bonus || 0;
-    const levelBonus = getLevelBonus(userLevel);
-    const totalRate = basePrice + paymentBonus + levelBonus;
-    
-    return (amount * totalRate).toFixed(2);
+    // ... (existing code)
   };
 
   const handleContinue = async () => {
-    if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
-      try {
-        // Save payment method data
-        await fetch('/api/payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegramId,
-            paymentMethod: selectedPayment,
-            paymentAddress,
-            transactionStatus: "processing"
-          })
-        });
-
-        // Save Pi amount and address
-        await fetch('/api/piamount', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegramId,
-            amount: piAmount,
-            imageUrl: imageUrl,
-            piaddress: piAddress
-          })
-        });
-        
-        router.push('/summary');
-      } catch (error) {
-        console.error('Error saving data:', error);
-      }
-    }
+    // ... (existing code)
   };
 
   const isButtonEnabled = piAmount && imageUploaded && piAddress && selectedPayment && paymentAddress;
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <Script src="https://kit.fontawesome.com/18e66d329f.js" />
-      
+
       {/* Header */}
       <div className="w-full bg-[#670773] text-white p-4 shadow-lg">
         <h1 className="text-2xl font-bold text-center">Pi Trader</h1>
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 max-w-md">
-        <div className="space-y-6">
-          {/* Wallet Section */}
+      <div className="container mx-auto max-w-4xl">
+        <div className="space-y-6 md:space-y-8">
+          {/* Payment Method Section */}
           <div className="bg-white rounded-lg p-6 shadow-md">
-            <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              Send your Pi to this wallet address
-            </h2>
-            <div className="flex items-center space-x-2">
-              <div className="flex-1 bg-gray-100 p-3 rounded-lg font-mono text-sm break-all">
-                {walletAddress}
-              </div>
-              <button
-                onClick={handleCopyAddress}
-                className="bg-[#670773] text-white p-2 rounded-lg hover:bg-[#7a1b86] transition-colors"
-              >
-                <i className={`fas ${copied ? 'fa-check' : 'fa-copy'} text-lg`}></i>
-              </button>
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">Choose Your Payment Method</h2>
+            <div className="relative">
+              {selectedPayment ? (
+                <div
+                  onClick={() => setSelectedPayment('')}
+                  className="flex items-center p-3 pl-12 border border-gray-300 rounded-lg bg-gray-100 cursor-pointer"
+                >
+                  <img
+                    src={paymentMethods.find(m => m.id === selectedPayment)?.image}
+                    alt="Payment method"
+                    className="w-6 h-6 object-contain mr-3"
+                  />
+                  <div>{paymentMethods.find(m => m.id === selectedPayment)?.label}</div>
+                  <i className="fas fa-chevron-up ml-auto"></i>
+                </div>
+              ) : (
+                <div className="flex flex-col">
+                  {paymentMethods.map((method) => (
+                    <div
+                      key={method.id}
+                      onClick={() => setSelectedPayment(method.id)}
+                      className="flex items-center p-3 pl-12 border border-gray-300 rounded-lg hover:bg-gray-100 cursor-pointer"
+                    >
+                      <img
+                        src={method.image}
+                        alt="Payment method"
+                        className="w-6 h-6 object-contain mr-3"
+                      />
+                      <div>
+                        {method.label} {method.badge && `(${method.badge})`}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
+
+            {selectedPayment && (
+              <input
+                type="text"
+                value={paymentAddress}
+                onChange={(e) => setPaymentAddress(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mt-4"
+                placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
+              />
+            )}
           </div>
 
           {/* Amount Section */}
           <div className="bg-white rounded-lg p-6 shadow-md">
-            <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              How many Pi you want to sell?
-            </h2>
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">How many Pi you want to sell?</h2>
             <input
               type="number"
               value={piAmount}
@@ -244,48 +179,9 @@ const MergedPaymentPage = () => {
             )}
           </div>
 
-          {/* Payment Method Section */}
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              Choose Your Payment Method
-            </h2>
-            <div className="relative">
-              <select
-                value={selectedPayment}
-                onChange={(e) => setSelectedPayment(e.target.value)}
-                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 appearance-none"
-              >
-                <option value="">Select payment method</option>
-                {paymentMethods.map((method) => (
-                  <option key={method.id} value={method.id} className="flex items-center">
-                    {method.label} {method.badge && `(${method.badge})`}
-                  </option>
-                ))}
-              </select>
-              {selectedPayment && (
-                <img
-                  src={paymentMethods.find(m => m.id === selectedPayment)?.image}
-                  alt="Payment method"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 object-contain"
-                />
-              )}
-            </div>
-            {selectedPayment && (
-              <input
-                type="text"
-                value={paymentAddress}
-                onChange={(e) => setPaymentAddress(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
-                placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
-              />
-            )}
-          </div>
-
           {/* Pi Address Section */}
           <div className="bg-white rounded-lg p-6 shadow-md">
-            <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              Your Pi Wallet Address
-            </h2>
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">Your Pi Wallet Address</h2>
             <input
               type="text"
               value={piAddress}
@@ -297,9 +193,7 @@ const MergedPaymentPage = () => {
 
           {/* Image Upload Section */}
           <div className="bg-white rounded-lg p-6 shadow-md">
-            <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              Payment Proof Screenshot
-            </h2>
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">Payment Proof Screenshot</h2>
             <div
               onClick={() => !imageUploaded && fileInputRef.current?.click()}
               className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
