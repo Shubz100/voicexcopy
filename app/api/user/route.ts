@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
@@ -27,7 +28,6 @@ function calculateProfileMetrics(piAmountArray: number[]) {
     };
 }
 
-// Helper function to check if a new transaction is allowed
 function canInitiateNewTransaction(transactionStatus: string[]) {
     if (transactionStatus.length === 0) return true;
     const lastStatus = transactionStatus[transactionStatus.length - 1];
@@ -42,8 +42,30 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid user data' }, { status: 400 })
         }
 
+        const select = {
+            telegramId: true,
+            username: true,
+            firstName: true,
+            lastName: true,
+            level: true,
+            piAmount: true,
+            transactionStatus: true,
+            totalPoints: true,
+            introSeen: true,
+            paymentMethod: true,
+            paymentAddress: true,
+            isUpload: true,
+            imageUrl: true,
+            savedImages: true,
+            finalpis: true,
+            baseprice: true,
+            piaddress: true,// New field for Pi wallet address
+            istransaction: true,
+        }
+
         let user = await prisma.user.findUnique({
-            where: { telegramId: userData.id }
+            where: { telegramId: userData.id },
+            select
         })
 
         if (!user) {
@@ -54,8 +76,9 @@ export async function POST(req: NextRequest) {
                     firstName: userData.first_name || '',
                     lastName: userData.last_name || '',
                     level: 1,
-                    transactionStatus: []  // Initialize empty status array
-                }
+                    transactionStatus: []
+                },
+                select
             })
         }
 
@@ -71,9 +94,10 @@ export async function POST(req: NextRequest) {
                 where: { telegramId: userData.id },
                 data: { 
                     transactionStatus: {
-                        push: 'processing'  // Add new processing status
+                        push: 'processing'
                     }
-                }
+                },
+                select
             })
         }
 
@@ -87,7 +111,8 @@ export async function POST(req: NextRequest) {
                     where: { telegramId: userData.id },
                     data: { 
                         transactionStatus: newStatuses
-                    }
+                    },
+                    select
                 })
             }
         }
@@ -98,7 +123,8 @@ export async function POST(req: NextRequest) {
                 where: { telegramId: userData.id },
                 data: { 
                     level: userData.level
-                }
+                },
+                select
             })
         }
 
@@ -109,7 +135,7 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             ...user,
             ...metrics,
-            status: user.transactionStatus  // Include status in response
+            status: user.transactionStatus
         })
     } catch (error) {
         console.error('Error processing user data:', error)
