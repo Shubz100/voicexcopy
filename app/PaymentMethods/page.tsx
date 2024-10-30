@@ -60,8 +60,6 @@ const MergedPaymentPage = () => {
   const [paymentAddress, setPaymentAddress] = useState<string>('');
   const [userLevel, setUserLevel] = useState<number>(1);
   const [basePrice, setBasePrice] = useState<number>(0.15);
-  const [showPaymentMethods, setShowPaymentMethods] = useState<boolean>(false);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [showSummary, setShowSummary] = useState(false);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -69,15 +67,15 @@ const MergedPaymentPage = () => {
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     if (tg) {
-      const webAppUser  = tg.initDataUnsafe?.user;
-      if (webAppUser ) {
-        setTelegramId(webAppUser .id);
-        fetchUser Data(webAppUser .id);
+      const webAppUser = tg.initDataUnsafe?.user;
+      if (webAppUser) {
+        setTelegramId(webAppUser.id);
+        fetchUserData(webAppUser.id);
       }
     }
   }, []);
 
-  const fetchUser Data = async (userId: number): Promise<void> => {
+  const fetchUserData = async (userId: number): Promise<void> => {
     try {
       const response = await fetch(`/api/user`, {
         method: 'POST',
@@ -87,10 +85,10 @@ const MergedPaymentPage = () => {
       const userData = await response.json();
       setImageUploaded(userData.isUpload || false);
       setImageUrl(userData.imageUrl || null);
-      setUser Level(userData.level || 1);
+      setUserLevel(userData.level || 1);
       setBasePrice(userData.baseprice || 0.15);
       if (userData.piaddress) {
-        setPiAddress(userData.piaddress[userData.pi address.length - 1]);
+        setPiAddress(userData.piaddress[userData.piaddress.length - 1]);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -99,7 +97,6 @@ const MergedPaymentPage = () => {
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
     if (e.target.files && e.target.files.length > 0 && telegramId) {
-      setIsLoading(true);
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('file', file);
@@ -117,15 +114,12 @@ const MergedPaymentPage = () => {
         }
       } catch (error) {
         console.error('Error uploading image:', error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
 
   const handleRemoveImage = async (): Promise<void> => {
     if (telegramId) {
-      setIsLoading(true);
       try {
         const response = await fetch(`/api/imageupload?telegramId=${telegramId}`, {
           method: 'DELETE',
@@ -140,8 +134,6 @@ const MergedPaymentPage = () => {
         }
       } catch (error) {
         console.error('Error removing image:', error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -183,33 +175,34 @@ const MergedPaymentPage = () => {
 
   const handleConfirm = async () => {
     try {
-      // Save payment method data
-      await fetch('/api/payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegramId,
-          paymentMethod: selectedPayment,
-          paymentAddress,
-          transactionStatus: "processing"
-        })
-      });
+        // Save payment method data
+        await fetch('/api/payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId,
+            paymentMethod: selectedPayment,
+            paymentAddress,
+            transactionStatus: "processing"
+          })
+        });
 
-      // Save Pi amount and address
-      await fetch('/api/piamount', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegramId,
-          amount: piAmount,
-          imageUrl: imageUrl,
-          piaddress: piAddress
-        })
-      });
-      
-      router.push('/summary');
-    } catch (error) {
-      console.error('Error saving data:', error);
+        // Save Pi amount and address
+        await fetch('/api/piamount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId,
+            amount: piAmount,
+            imageUrl: imageUrl,
+            piaddress: piAddress
+          })
+        });
+        
+        router.push('/summary');
+      } catch (error) {
+        console.error('Error saving data:', error);
+      }
     }
   };
 
@@ -235,62 +228,13 @@ const MergedPaymentPage = () => {
             <div className="flex items-center space-x-2">
               <div className="flex-1 bg-gray-100 p-3 rounded-lg font-mono text-sm break-all">
                 {walletAddress}
-              </div >
+              </div>
               <button
                 onClick={handleCopyAddress}
                 className="bg-[#670773] text-white p-2 rounded-lg hover:bg-[#7a1b86] transition-colors"
               >
                 <i className={`fas ${copied ? 'fa-check' : 'fa-copy'} text-lg`}></i>
               </button>
-            </div>
-          </div>
-
-          {/* Payment Method Section */}
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              Choose Your Payment Method
-            </h2>
-            <div className="relative">
-              <div
-                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 flex items-center justify-between cursor-pointer"
-                onClick={() => setShowPaymentMethods(!showPaymentMethods)}
-              >
-                {selectedPayment
-                  ? paymentMethods.find(m => m.id === selectedPayment)?.label
-                  : 'Select payment method'}
-                <i className={`fas ${showPaymentMethods ? 'fa-chevron-up' : 'fa-chevron-down'} text-gray-500`}></i>
-              </div>
-              {showPaymentMethods && (
-                <div className="absolute z-10 w-full bg-white rounded-lg shadow-lg border border-gray-300 mt-1">
-                  {paymentMethods.map((method) => (
-                    <div
-                      key={method.id}
-                      className="p-3 hover:bg-gray-100 cursor-pointer flex items-center"
-                      onClick={() => {
-                        setSelectedPayment(method.id);
-                        setPaymentAddress('');
-                        setShowPaymentMethods(false);
-                      }}
-                    >
-                      <img
-                        src={method.image}
-                        alt={method.label}
-                        className="w-6 h-6 object-contain mr-3"
-                      />
-                      <span>{method.label} {method.badge && `(${method.badge})`}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              {selectedPayment && (
-                <input
-                  type="text"
-                  value={paymentAddress}
-                  onChange={(e) => setPaymentAddress(e.target.value)}
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
-                  placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
-                />
-              )}
             </div>
           </div>
 
@@ -310,6 +254,43 @@ const MergedPaymentPage = () => {
               <p className="mt-3 text-[#670773] font-medium">
                 You will receive {calculateUSDT(piAmount)} USDT
               </p>
+            )}
+          </div>
+
+          {/* Payment Method Section */}
+          <div className="bg-white rounded-lg p-6 shadow-md">
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">
+              Choose Your Payment Method
+            </h2>
+            <div className="relative">
+              <select
+                value={selectedPayment}
+                onChange={(e) => setSelectedPayment(e.target.value)}
+                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 appearance-none"
+              >
+                <option value="">Select payment method</option>
+                {paymentMethods.map((method) => (
+                  <option key={method.id} value={method.id} className="flex items-center">
+                    {method.label} {method.badge && `(${method.badge})`}
+                  </option>
+                ))}
+              </select>
+              {selectedPayment && (
+                <img
+                  src={paymentMethods.find(m => m.id === selectedPayment)?.image}
+                  alt="Payment method"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 object-contain"
+                />
+              )}
+            </div>
+            {selectedPayment && (
+              <input
+                type="text"
+                value={paymentAddress}
+                onChange={(e) => setPaymentAddress(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
+                placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
+              />
             )}
           </div>
 
@@ -344,12 +325,7 @@ const MergedPaymentPage = () => {
                 accept="image/*"
                 className="hidden"
               />
-              {isLoading ? (
-                <div className="text-[#670773]">
-                  <i className="fas fa-spinner fa-spin text-3xl mb-2"></i>
-                  <p>Uploading...</p>
-                </div>
-              ) : imageUploaded && imageUrl ? (
+              {imageUploaded && imageUrl ? (
                 <div className="text-[#670773]">
                   <i className="fas fa-check-circle text-3xl mb-2"></i>
                   <p>Image uploaded successfully</p>
@@ -377,12 +353,63 @@ const MergedPaymentPage = () => {
                   <p>Click to upload screenshot</p>
                 </div>
               )}
-              {isLoading && (
-                <div className="absolute top-0 left-0 w-full h-full bg-white bg-opacity-50 flex justify-center items-center">
-                  <i className="fas fa-spinner fa-spin text-3xl text-gray-600"></i>
-                </div>
-              )}
             </div>
+
+                  {/* Summary Popup */}
+      {showSummary && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center p-4 z-50 animate-fade-in">
+          <div className="bg-white w-full max-w-md rounded-t-xl p-6 transform translate-y-0 transition-transform duration-300 ease-out">
+            <h3 className="text-lg font-semibold text-[#670773] mb-4">Transaction Summary</h3>
+            
+            <div className="space-y-3 mb-6">
+              <div className="flex justify-between">
+                <span className="text-gray-600">Amount of Pi Sold:</span>
+                <span className="font-semibold">{piAmount} Pi</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Price per Pi:</span>
+                <span className="font-semibold">${calculatePricePerPi()}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Amount to be Received:</span>
+                <span className="font-semibold">${calculateUSDT(piAmount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Payment Method:</span>
+                <span className="font-semibold">{paymentMethods.find(m => m.id === selectedPayment)?.label}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Payment Address:</span>
+                <span className="font-semibold break-all text-sm">{paymentAddress}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-600">Pi Wallet Address:</span>
+                <span className="font-semibold break-all text-sm">{piAddress}</span>
+              </div>
+            </div>
+
+            <p className="text-gray-600 text-sm mb-6 text-center">
+              Make sure all the information is correct
+            </p>
+
+            <div className="flex space-x-4">
+              <button
+                onClick={() => setShowSummary(false)}
+                className="flex-1 py-3 px-4 rounded-lg border border-[#670773] text-[#670773] font-semibold hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirm}
+                className="flex-1 py-3 px-4 rounded-lg bg-[#670773] text-white font-semibold hover:bg-[#7a1b86] transition-colors"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
           </div>
 
           {/* Continue Button */}
@@ -395,68 +422,9 @@ const MergedPaymentPage = () => {
                   ? 'bg-[#670773] hover:bg-[#7a1b86] transform hover:scale-105'
                   : 'bg-gray-400 cursor-not-allowed'}`}
             >
-              {isLoading ? (
-                <i className="fas fa-spinner fa-spin text-lg text-white"></i>
-              ) : (
-                'Continue'
-              )}
+              Continue
             </button>
           </div>
-
-          {/* Summary Popup */}
-          {showSummary && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center p-4 z-50 animate-fade-in">
-              <div className="bg-white w-full max-w-md rounded-t-xl p-6 transform translate-y-0 transition-transform duration-300 ease-out">
-                <h3 className="text-lg font-semibold text-[#670773] mb-4">Transaction Summary</h3>
-                
-                <div className="space-y-3 mb-6">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Amount of Pi Sold:</span>
-                    <span className="font-semibold">{piAmount} Pi</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Price per Pi:</span>
-                    <span className="font-semibold">${calculatePricePerPi()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Amount to be Received:</span>
-                    <span className="font-semibold">${calculateUSDT(piAmount)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Method:</span>
-                    <span className="font-semibold">{paymentMethods.find(m => m.id === selectedPayment)?.label}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Payment Address:</span>
-                    <span className="font-semibold break-all text-sm">{paymentAddress}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Pi Wallet Address:</span>
-                    <span className="font-semibold break-all text-sm">{piAddress}</span>
-                  </div>
-                </div>
-
-                <p className="text-gray-600 text-sm mb-6 text-center">
-                  Make sure all the information is correct
-                </p>
-
-                <div className="flex space-x-4">
-                  <button
-                    onClick={() => setShowSummary(false)}
-                    className="flex-1 py-3 px-4 rounded-lg border border-[#670773] text-[#670773] font-semibold hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={handleConfirm}
-                    className="flex-1 py-3 px-4 rounded-lg bg-[#670773] text-white font-semibold hover:bg-[#7a1b86] transition-colors"
-                  >
-                    Confirm
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
 
         {/* Notification for copy */}
