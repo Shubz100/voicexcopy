@@ -243,7 +243,7 @@ const MergedPaymentPage = () => {
             </h2>
             <div className="relative">
               <div
-                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 flex items-center justify-between cursor-pointer"
+                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] text-black mb-4 flex items-center justify-between cursor-pointer"
                 onClick={() => setShowPaymentMethods(!showPaymentMethods)}
               >
                 {selectedPayment
