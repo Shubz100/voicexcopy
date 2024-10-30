@@ -60,7 +60,6 @@ const MergedPaymentPage = () => {
   const [paymentAddress, setPaymentAddress] = useState<string>('');
   const [userLevel, setUserLevel] = useState<number>(1);
   const [basePrice, setBasePrice] = useState<number>(0.15);
-  const [showSummary, setShowSummary] = useState(false);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -160,45 +159,37 @@ const MergedPaymentPage = () => {
     return (amount * totalRate).toFixed(2);
   };
 
-  const calculatePricePerPi = () => {
-    const selectedMethod = paymentMethods.find(m => m.id === selectedPayment);
-    const paymentBonus = selectedMethod?.bonus || 0;
-    const levelBonus = getLevelBonus(userLevel);
-    return (basePrice + paymentBonus + levelBonus).toFixed(2);
-  };
-
   const handleContinue = async () => {
     if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
-      setShowSummary(true);
-    }
-  };
+      try {
+        // Save payment method data
+        await fetch('/api/payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId,
+            paymentMethod: selectedPayment,
+            paymentAddress,
+            transactionStatus: "processing"
+          })
+        });
 
-  const handleConfirm = async () => {
-    try {
-      await fetch('/api/payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          telegramId,
-          paymentMethod: selectedPayment,
-          paymentAddress,
-          transactionStatus: "processing"
-        })
-      });
-
-      await fetch('/api/piamount', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({
-           telegramId,
-           piAmount,
-           transactionStatus: "processing"
-         })
-       });
-
-      router.push('/success');
-    } catch (error) {
-      console.error('Error processing payment:', error);
+        // Save Pi amount and address
+        await fetch('/api/piamount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            telegramId,
+            amount: piAmount,
+            imageUrl: imageUrl,
+            piaddress: piAddress
+          })
+        });
+        
+        router.push('/summary');
+      } catch (error) {
+        console.error('Error saving data:', error);
+      }
     }
   };
 
@@ -215,189 +206,175 @@ const MergedPaymentPage = () => {
 
       {/* Main Content */}
       <div className="container mx-auto px-4 py-8 max-w-md">
-        <h2 className="text-lg font-bold mb-4">Payment Methods</h2>
-        <ul className="flex flex-wrap justify-center mb-4">
-          {paymentMethods.map((method, index) => (
-            <li key={index} className="mr-4 mb-4">
-              <input
-                type="radio"
-                id={method.id}
-                name="paymentMethod"
-                value={method.id}
-                onChange={(e) => setSelectedPayment(e.target.value)}
-              />
-              <label
-                htmlFor={method.id}
-                className="flex items-center cursor-pointer"
-              >
-                <img src={method.image} alt={method.label} className="w-8 h-8 mr-2" />
-                <span className="text-lg">{method.label}</span>
-                {method.badge && (
-                  <span
-                    className="bg-orange-500 text-white text-xs font-bold py-1 px-2 rounded-full ml-2"
-                  >
-                    {method.badge}
-                  </span>
-                )}
-              </label>
-            </li>
-          ))}
-        </ul>
-
-        <div className="mb-4">
-          <label
-            htmlFor="piAmount"
-            className="block text-lg font-bold mb-2"
-          >
-            Enter Pi Amount
-          </label>
-          <input
-            type="number"
-            id="piAmount"
-            value={piAmount}
-            onChange={(e) => setPiAmount(e.target.value)}
-            className="w-full p-2 pl-10 text-lg"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="paymentAddress"
-            className="block text-lg font-bold mb-2"
-          >
-            Enter Payment Address
-          </label>
-          <input
-            type="text"
-            id="paymentAddress"
-            value={paymentAddress}
-            onChange={(e) => setPaymentAddress(e.target.value)}
-            className="w-full p-2 pl-10 text-lg"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="piAddress"
-            className="block text-lg font-bold mb-2"
-          >
-            Enter Pi Address
-          </label>
-          <input
-            type="text"
-            id="piAddress"
-            value={piAddress}
-            onChange={(e) => setPiAddress(e.target.value)}
-            className="w-full p-2 pl-10 text-lg"
-          />
-        </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="imageUpload"
-            className="block text-lg font-bold mb-2"
-          >
-            Upload Image
-          </label>
-          <input
-            type="file"
-            id="imageUpload"
-            ref={fileInputRef}
-            onChange={handleImageUpload}
-            className="w-full p-2 pl-10 text-lg"
-          />
-          {imageUrl && (
-            <img src={imageUrl} alt="Uploaded Image" className="w-24 h-24 mb-2" />
-          )}
-          {imageUploaded && (
-            <button
-              className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-              onClick={handleRemoveImage}
-            >
-              Remove Image
-            </button>
-          )}
-        </div>
-
-        <div className="mb-4">
-          <label
-            htmlFor="walletAddress"
-            className="block text-lg font-bold mb-2"
-          >
-            Wallet Address
-          </label>
-          <input
-            type="text"
-            id="walletAddress"
-            value={walletAddress}
-            readOnly
-            className="w-full p-2 pl-10 text-lg"
-          />
-          <button
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
-            onClick={handleCopyAddress}
-          >
-            Copy Address
-          </ button>
-        </div>
-
-        <div className="mb-4">
-          <h2 className="text-lg font-bold mb-2">Summary</h2>
-          <p>
-            You will receive <span className="font-bold">{calculateUSDT(piAmount)}</span> USDT
-          </p>
-          <p>
-            Price per Pi: <span className="font-bold">{calculatePricePerPi()}</span> USDT
-          </p>
-        </div>
-
-        <button
-          className="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded"
-          onClick={handleContinue}
-          disabled={!isButtonEnabled}
-        >
-          Continue
-        </button>
-
-        {showSummary && (
-          <div className="fixed top-0 left-0 w-full h-screen bg-gray-500 bg-opacity-50 flex justify-center items-center">
-            <div className="bg-white p-4 rounded shadow-lg">
-              <h2 className="text-lg font-bold mb-2">Confirm Payment</h2>
-              <p>
-                You will receive <span className="font-bold">{calculateUSDT(piAmount)}</span> USDT
-              </p>
-              <p>
-                Price per Pi: <span className="font-bold">{calculatePricePerPi()}</span> USDT
-              </p>
+        <div className="space-y-6">
+          {/* Wallet Section */}
+          <div className="bg-white rounded-lg p-6 shadow-md">
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">
+              Send your Pi to this wallet address
+            </h2>
+            <div className="flex items-center space-x-2">
+              <div className="flex-1 bg-gray-100 p-3 rounded-lg font-mono text-sm break-all">
+                {walletAddress}
+              </div>
               <button
-                className="bg-green-500 hover:bg-green-700 text-white font-bold py-2 px-4 rounded"
-                onClick={handleConfirm}
+                onClick={handleCopyAddress}
+                className="bg-[#670773] text-white p-2 rounded-lg hover:bg-[#7a1b86] transition-colors"
               >
-                Confirm
-              </button>
-              <button
-                className="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded"
-                onClick={() => setShowSummary(false)}
-              >
-                Cancel
+                <i className={`fas ${copied ? 'fa-check' : 'fa-copy'} text-lg`}></i>
               </button>
             </div>
           </div>
-        )}
-      </div>
 
-      {/* Notification for copy */}
-      {copied && (
-        <div className="fixed top-0 left-0 w-full h-screen bg-gray-500 bg-opacity-50 flex justify-center items-center">
-          <div className="bg-white p-4 rounded shadow-lg">
-            <p>Wallet address copied to clipboard!</p>
+          {/* Amount Section */}
+          <div className="bg-white rounded-lg p-6 shadow-md">
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">
+              How many Pi you want to sell?
+            </h2>
+            <input
+              type="number"
+              value={piAmount}
+              onChange={(e) => setPiAmount(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
+              placeholder="Enter amount"
+            />
+            {piAmount && (
+              <p className="mt-3 text-[#670773] font-medium">
+                You will receive {calculateUSDT(piAmount)} USDT
+              </p>
+            )}
+          </div>
+
+          {/* Payment Method Section */}
+          <div className="bg-white rounded-lg p-6 shadow-md">
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">
+              Choose Your Payment Method
+            </h2>
+            <div className="relative">
+              <select
+                value={selectedPayment}
+                onChange={(e) => setSelectedPayment(e.target.value)}
+                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 appearance-none"
+              >
+                <option value="">Select payment method</option>
+                {paymentMethods.map((method) => (
+                  <option key={method.id} value={method.id} className="flex items-center">
+                    {method.label} {method.badge && `(${method.badge})`}
+                  </option>
+                ))}
+              </select>
+              {selectedPayment && (
+                <img
+                  src={paymentMethods.find(m => m.id === selectedPayment)?.image}
+                  alt="Payment method"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-6 h-6 object-contain"
+                />
+              )}
+            </div>
+            {selectedPayment && (
+              <input
+                type="text"
+                value={paymentAddress}
+                onChange={(e) => setPaymentAddress(e.target.value)}
+                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
+                placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
+              />
+            )}
+          </div>
+
+          {/* Pi Address Section */}
+          <div className="bg-white rounded-lg p-6 shadow-md">
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">
+              Your Pi Wallet Address
+            </h2>
+            <input
+              type="text"
+              value={piAddress}
+              onChange={(e) => setPiAddress(e.target.value)}
+              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
+              placeholder="Enter your Pi wallet address"
+            />
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="bg-white rounded-lg p-6 shadow-md">
+            <h2 className="text-lg font-semibold text-[#670773] mb-3">
+              Payment Proof Screenshot
+            </h2>
+            <div
+              onClick={() => !imageUploaded && fileInputRef.current?.click()}
+              className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer
+                ${imageUploaded ? 'border-[#670773] bg-purple-50' : 'border-gray-300'}`}
+            >
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleImageUpload}
+                accept="image/*"
+                className="hidden"
+              />
+              {imageUploaded && imageUrl ? (
+                <div className="text-[#670773]">
+                  <i className="fas fa-check-circle text-3xl mb-2"></i>
+                  <p>Image uploaded successfully</p>
+                  <div className="mt-4 mb-4">
+                    <img 
+                      src={imageUrl} 
+                      alt="Payment proof" 
+                      className="max-w-full h-auto rounded-lg mx-auto"
+                      style={{ maxHeight: '200px' }}
+                    />
+                  </div>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleRemoveImage();
+                    }}
+                    className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="text-gray-500">
+                  <i className="fas fa-cloud-upload-alt text-3xl mb-2"></i>
+                  <p>Click to upload screenshot</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Continue Button */}
+          <div className="mt-8 flex justify-end">
+            <button
+              onClick={handleContinue}
+              disabled={!isButtonEnabled}
+              className={`px-8 py-3 rounded-full text-white font-bold text-lg transition-all
+                ${isButtonEnabled 
+                  ? 'bg-[#670773] hover:bg-[#7a1b86] transform hover:scale-105'
+                  : 'bg-gray-400 cursor-not-allowed'}`}
+            >
+              Continue
+            </button>
           </div>
         </div>
-      )}
-      
-      <style jsx>{`
-        // ... your styles ...
-      `}</style>
+
+        {/* Notification for copy */}
+        {copied && (
+          <div className="fixed bottom-4 right-4 bg-[#670773] text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in">
+            Address copied!
+          </div>
+        )}
+        
+        <style jsx>{`
+          @keyframes fade-in {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+          .animate-fade-in {
+            animation: fade-in 0.3s ease-out forwards;
+          }
+        `}</style>
+      </div>
     </div>
   );
 };
