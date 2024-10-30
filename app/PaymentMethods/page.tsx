@@ -355,62 +355,6 @@ const MergedPaymentPage = () => {
               )}
             </div>
 
-                  {/* Summary Popup */}
-      {showSummary && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center p-4 z-50 animate-fade-in">
-          <div className="bg-white w-full max-w-md rounded-t-xl p-6 transform translate-y-0 transition-transform duration-300 ease-out">
-            <h3 className="text-lg font-semibold text-[#670773] mb-4">Transaction Summary</h3>
-            
-            <div className="space-y-3 mb-6">
-              <div className="flex justify-between">
-                <span className="text-gray-600">Amount of Pi Sold:</span>
-                <span className="font-semibold">{piAmount} Pi</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Price per Pi:</span>
-                <span className="font-semibold">${calculatePricePerPi()}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Amount to be Received:</span>
-                <span className="font-semibold">${calculateUSDT(piAmount)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Payment Method:</span>
-                <span className="font-semibold">{paymentMethods.find(m => m.id === selectedPayment)?.label}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Payment Address:</span>
-                <span className="font-semibold break-all text-sm">{paymentAddress}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-gray-600">Pi Wallet Address:</span>
-                <span className="font-semibold break-all text-sm">{piAddress}</span>
-              </div>
-            </div>
-
-            <p className="text-gray-600 text-sm mb-6 text-center">
-              Make sure all the information is correct
-            </p>
-
-            <div className="flex space-x-4">
-              <button
-                onClick={() => setShowSummary(false)}
-                className="flex-1 py-3 px-4 rounded-lg border border-[#670773] text-[#670773] font-semibold hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirm}
-                className="flex-1 py-3 px-4 rounded-lg bg-[#670773] text-white font-semibold hover:bg-[#7a1b86] transition-colors"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-          </div>
 
           {/* Continue Button */}
           <div className="mt-8 flex justify-end">
