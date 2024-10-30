@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 
 const PaymentProof = () => {
   const router = useRouter();
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>('');
   const [piAmount, setPiAmount] = useState<string>('');
   const [imageUploaded, setImageUploaded] = useState<boolean>(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -16,16 +15,6 @@ const PaymentProof = () => {
   const [hasStoredAddress, setHasStoredAddress] = useState<boolean>(false);
   const [isEditingAddress, setIsEditingAddress] = useState<boolean>(false);
   const [previousAddresses, setPreviousAddresses] = useState<string[]>([]);
-
-  const paymentMethods = [
-    'Bank Transfer',
-    'PayPal',
-    'Wise',
-    'Crypto USDT',
-    'Western Union',
-    'MoneyGram'
-  ];
-
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -66,6 +55,7 @@ const PaymentProof = () => {
       const formData = new FormData();
       formData.append('file', file);
       formData.append('telegramId', telegramId.toString());
+
       try {
         const response = await fetch('/api/imageupload', {
           method: 'POST',
@@ -127,8 +117,7 @@ const PaymentProof = () => {
             telegramId,
             amount: piAmount,
             imageUrl: imageUrl,
-            piaddress: piAddress,
-            paymentMethod: selectedPaymentMethod
+            piaddress: piAddress
           })
         });
         
@@ -147,7 +136,7 @@ const PaymentProof = () => {
     }
   };
 
-  const isButtonEnabled = piAmount && imageUploaded && piAddress && selectedPaymentMethod;
+  const isButtonEnabled = piAmount && imageUploaded && piAddress;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
@@ -179,25 +168,6 @@ const PaymentProof = () => {
                 )}
               </button>
             </div>
-          </div>
-
-          {/* Payment Method Section */}
-          <div className="bg-white rounded-lg p-6 shadow-md">
-            <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              Select Payment Method
-            </h2>
-            <select
-              value={selectedPaymentMethod}
-              onChange={(e) => setSelectedPaymentMethod(e.target.value)}
-              className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] appearance-none bg-white cursor-pointer"
-            >
-              <option value="" disabled>Choose your payment method</option>
-              {paymentMethods.map((method) => (
-                <option key={method} value={method}>
-                  {method}
-                </option>
-              ))}
-            </select>
           </div>
 
           {/* Amount Section */}
