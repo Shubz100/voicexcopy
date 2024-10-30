@@ -117,61 +117,60 @@ export default function Home() {
   }
 
   return (
-    <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 ${mounted ? 'fade-in' : ''}`}>
+    <div className={`h-screen bg-gradient-to-b from-gray-50 to-gray-100 ${mounted ? 'fade-in' : ''} overflow-hidden`}>
       <Script src="https://kit.fontawesome.com/18e66d329f.js"/>
       
       {/* Header */}
-      <div className="w-full bg-[#670773] text-white p-4 shadow-lg flex items-center justify-between relative z-10">
+      <div className="w-full bg-[#670773] text-white p-3 shadow-lg flex items-center justify-between relative z-10">
         <button 
           onClick={() => setMenuOpen(!menuOpen)}
           className="hover:scale-110 transition-transform"
         >
-          <i className="fas fa-bars text-2xl"></i>
+          <i className="fas fa-bars text-xl"></i>
         </button>
-        <h1 className="text-2xl font-bold">Pi Trader Official</h1>
+        <h1 className="text-xl font-bold">Pi Trader Official</h1>
         <div className="w-8"></div>
       </div>
 
       {/* Notification */}
       {showNotification && (
-        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-[#670773] text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
+        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-[#670773] text-white px-6 py-2 rounded-lg shadow-lg z-50 text-sm">
           This feature will be available soon
         </div>
       )}
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg p-6 shadow-md mb-8 text-center">
-          <p className="text-[#670773] text-lg font-medium">
+      <div className="container mx-auto px-4 py-4">
+        <div className="bg-white rounded-lg p-3 shadow-md mb-4 text-center">
+          <p className="text-[#670773] text-sm font-medium">
             Pi Coin has not launched. This is the premarket price set by our team and does not represent Official data
           </p>
         </div>
 
-        <div className="text-center mb-12">
-          <div className="bg-white rounded-lg p-8 shadow-md mb-8">
-            <h2 className="text-6xl font-bold text-[#670773] price-pulse">
+        <div className="text-center">
+          <div className="bg-white rounded-lg p-4 shadow-md mb-4">
+            <h2 className="text-5xl font-bold text-[#670773]">
               $0.65/Pi
             </h2>
           </div>
 
-          <div className="relative w-64 h-64 mx-auto mb-12">
-            <div className="absolute inset-0 bg-[#670773] rounded-full opacity-10 animate-pulse"></div>
+          <div className="relative w-48 h-48 mx-auto mb-6">
             <img 
               src="/api/placeholder/400/320" 
               alt="Pi Coin" 
-              className="relative z-10 w-full h-full object-cover rounded-full shadow-xl hover:scale-105 transition-transform duration-300"
+              className="w-full h-full object-cover rounded-full shadow-xl hover:scale-105 transition-transform duration-300"
             />
           </div>
 
-          <div className="flex flex-col gap-4 items-center">
+          <div className="flex flex-col gap-3 items-center">
             <Link href="/PaymentMethods" className="w-full max-w-xs">
-              <button className="w-full bg-[#670773] text-white text-xl font-bold py-4 px-8 rounded-full shadow-lg hover:bg-[#7a1b86] transform hover:scale-105 transition-all duration-300 active:scale-95">
+              <button className="w-full bg-[#670773] text-white text-lg font-bold py-3 px-6 rounded-full shadow-lg hover:bg-[#7a1b86] transition-all">
                 Sell Your Pi
               </button>
             </Link>
             <button 
               onClick={handleBuyPi}
-              className="w-full max-w-xs bg-white text-[#670773] text-xl font-bold py-4 px-8 rounded-full shadow-lg border-2 border-[#670773] hover:bg-[#670773] hover:text-white transform hover:scale-105 transition-all duration-300 active:scale-95"
+              className="w-full max-w-xs bg-white text-[#670773] text-lg font-bold py-3 px-6 rounded-full shadow-lg border-2 border-[#670773] hover:bg-[#670773] hover:text-white transition-all"
             >
               Buy Pi
             </button>
@@ -186,21 +185,21 @@ export default function Home() {
             onClick={() => setMenuOpen(false)} 
             className="absolute top-4 right-4 text-white hover:scale-110 transition-transform"
           >
-            <i className="fas fa-times text-2xl"></i>
+            <i className="fas fa-times text-xl"></i>
           </button>
-          <h2 className="text-xl font-bold mt-8">Menu</h2>
+          <h2 className="text-lg font-bold mt-6">Menu</h2>
         </div>
-        <nav className="mt-4">
-          <ul className="space-y-2">
+        <nav className="mt-2">
+          <ul>
             {['Home', 'Transaction History', 'Live Support', 'Profile', 'Invite & Earn', 'Admin'].map((item, index) => (
-              <li key={index} className="menu-item" style={{animationDelay: `${index * 0.1}s`}}>
+              <li key={index} className="menu-item">
                 <a 
                   href="#" 
                   onClick={(e) => {
                     e.preventDefault()
                     handleMenuItemClick(item)
                   }}
-                  className="block py-3 px-6 hover:bg-white/10 transition-colors duration-300"
+                  className="block py-2 px-6 hover:bg-white/10 transition-colors duration-300"
                 >
                   <i className={`fas fa-${
                     item === 'Home' ? 'home' :
@@ -231,42 +230,11 @@ export default function Home() {
           to { transform: rotate(360deg); }
         }
         .fade-in {
-          animation: fadeIn 0.5s ease-out;
-        }
-        .price-pulse {
-          animation: pricePulse 2s infinite;
-        }
-        .menu-item {
-          opacity: 0;
-          animation: slideIn 0.3s ease-out forwards;
+          animation: fadeIn 0.3s ease-out;
         }
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
-        }
-        @keyframes pricePulse {
-          0%, 100% { transform: scale(1); }
-          50% { transform: scale(1.05); }
-        }
-        @keyframes slideIn {
-          from {
-            opacity: 0;
-            transform: translateX(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
         }
       `}</style>
     </div>
