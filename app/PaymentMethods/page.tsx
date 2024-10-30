@@ -239,7 +239,7 @@ const MergedPaymentPage = () => {
           {/* Payment Method Section */}
           <div className="bg-white rounded-lg p-6 shadow-md">
             <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              Choose Your Payment Method
+              Choose Your Payment Receiving Address
             </h2>
             <div className="relative">
               <div
