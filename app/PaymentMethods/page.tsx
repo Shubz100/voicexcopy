@@ -58,24 +58,25 @@ const MergedPaymentPage = () => {
   const [piAddress, setPiAddress] = useState<string>('');
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [paymentAddress, setPaymentAddress] = useState<string>('');
-  const [userLevel, setUserLevel] = useState<number>(1);
+  const [userLevel, setUser Level] = useState<number>(1);
   const [basePrice, setBasePrice] = useState<number>(0.15);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [showPaymentMethods, setShowPaymentMethods] = useState<boolean>(false);
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     if (tg) {
-      const webAppUser = tg.initDataUnsafe?.user;
-      if (webAppUser) {
-        setTelegramId(webAppUser.id);
-        fetchUserData(webAppUser.id);
+      const webAppUser  = tg.initDataUnsafe?.user;
+      if (webAppUser ) {
+        setTelegramId(webAppUser .id);
+        fetchUser Data(webAppUser .id);
       }
     }
   }, []);
 
-  const fetchUserData = async (userId: number): Promise<void> => {
+  const fetchUser Data = async (userId: number): Promise<void> => {
     try {
       const response = await fetch(`/api/user`, {
         method: 'POST',
@@ -85,10 +86,10 @@ const MergedPaymentPage = () => {
       const userData = await response.json();
       setImageUploaded(userData.isUpload || false);
       setImageUrl(userData.imageUrl || null);
-      setUserLevel(userData.level || 1);
+      setUser Level(userData.level || 1);
       setBasePrice(userData.baseprice || 0.15);
       if (userData.piaddress) {
-        setPiAddress(userData.piaddress[userData.piaddress.length - 1]);
+        setPiAddress(userData.piaddress[userData.pi address.length - 1]);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -96,8 +97,8 @@ const MergedPaymentPage = () => {
   };
 
   const handleImageUpload = async (e: ChangeEvent<HTMLInputElement>): Promise<void> => {
-    setIsLoading(true);
     if (e.target.files && e.target.files.length > 0 && telegramId) {
+      setLoading(true);
       const file = e.target.files[0];
       const formData = new FormData();
       formData.append('file', file);
@@ -116,16 +117,13 @@ const MergedPaymentPage = () => {
       } catch (error) {
         console.error('Error uploading image:', error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
-    } else {
-      setIsLoading(false);
     }
   };
 
   const handleRemoveImage = async (): Promise<void> => {
     if (telegramId) {
-      setIsLoading(true);
       try {
         const response = await fetch(`/api/imageupload?telegramId=${telegramId}`, {
           method: 'DELETE',
@@ -140,8 +138,6 @@ const MergedPaymentPage = () => {
         }
       } catch (error) {
         console.error('Error removing image:', error);
-      } finally {
-        setIsLoading(false);
       }
     }
   };
@@ -170,7 +166,7 @@ const MergedPaymentPage = () => {
 
   const handleContinue = async () => {
     if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
-      setIsLoading(true);
+      setLoading(true);
       try {
         // Save payment method data
         await fetch('/api/payment', {
@@ -200,7 +196,7 @@ const MergedPaymentPage = () => {
       } catch (error) {
         console.error('Error saving data:', error);
       } finally {
-        setIsLoading(false);
+        setLoading(false);
       }
     }
   };
@@ -243,42 +239,43 @@ const MergedPaymentPage = () => {
               Choose Your Payment Method
             </h2>
             <div className="relative">
-              <div
-                onClick={() => setSelectedPayment('')}
-                className={`w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 cursor-pointer ${selectedPayment ? 'bg-gray-100' : ''}`}
+              <button
+                onClick={() => setShowPaymentMethods(!showPaymentMethods)}
+                className="w-full p-3 pl-12 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773] mb-4 appearance-none"
               >
-                {selectedPayment
-                  ? paymentMethods.find(m => m.id === selectedPayment)?.label
-                  : 'Select payment method'}
-              </div>
-              {!selectedPayment && (
-                <div className="absolute top-16 left-0 right-0 bg-white rounded-lg shadow-lg z-10">
+                {selectedPayment ? paymentMethods.find(m => m.id === selectedPayment)?.label : 'Select payment method'}
+              </button>
+              {showPaymentMethods && (
+                <div className="absolute top-12 left-0 w-full bg-white rounded-lg shadow-md p-4">
                   {paymentMethods.map((method) => (
-                    <div
-                      key={method.id}
-                      onClick={() => setSelectedPayment(method.id)}
-                      className="p-3 hover:bg-gray-100 cursor-pointer flex items-center"
-                    >
-                      <img
-                        src={method.image}
-                        alt={method.label}
-                        className="w-6 h-6 object-contain mr-3"
+                    <div key={method.id} className="flex items-center mb-2">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value={method.id}
+                        onChange={(e) => setSelectedPayment(e.target.value)}
+                        className="mr-2"
                       />
-                      <span>{method.label} {method.badge && `(${method.badge})`}</span>
+                      <label className="text-gray-600">{method.label}</label>
+                      {method.badge && (
+                        <span className="bg-orange-100 text-orange-800 text-xs font-bold mr-2 px-2.5 py-0.5 rounded">
+                          {method.badge}
+                        </span>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
+              {selectedPayment && (
+                <input
+                  type="text"
+                  value={paymentAddress}
+                  onChange={(e) => setPaymentAddress(e.target.value)}
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
+                  placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
+                />
+              )}
             </div>
-            {selectedPayment && (
-              <input
-                type="text"
-                value={paymentAddress}
-                onChange={(e) => setPaymentAddress(e.target.value)}
-                className="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#670773]"
-                placeholder={paymentMethods.find(m => m.id === selectedPayment)?.placeholder}
-              />
-            )}
           </div>
 
           {/* Amount Section */}
@@ -330,14 +327,8 @@ const MergedPaymentPage = () => {
                 onChange={handleImageUpload}
                 accept="image/*"
                 className="hidden"
-                disabled={isLoading}
               />
-              {isLoading ? (
-                <div className="text-gray-500">
-                  <i className="fas fa-spinner fa-spin text-3xl mb-2"></i>
-                  <p>Uploading...</p>
-                </div>
-              ) : imageUploaded && imageUrl ? (
+              {imageUploaded && imageUrl ? (
                 <div className="text-[#670773]">
                   <i className="fas fa-check-circle text-3xl mb-2"></i>
                   <p>Image uploaded successfully</p>
@@ -357,12 +348,17 @@ const MergedPaymentPage = () => {
                     className="mt-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
                   >
                     Remove
-                  </button>
+                  </ button>
                 </div>
               ) : (
                 <div className="text-gray-500">
                   <i className="fas fa-cloud-upload-alt text-3xl mb-2"></i>
                   <p>Click to upload screenshot</p>
+                </div>
+              )}
+              {loading && (
+                <div className="absolute top-0 left-0 w-full h-full bg-white bg-opacity-50 flex justify-center items-center">
+                  <i className="fas fa-spinner fa-spin text-3xl text-gray-600"></i>
                 </div>
               )}
             </div>
@@ -378,7 +374,11 @@ const MergedPaymentPage = () => {
                   ? 'bg-[#670773] hover:bg-[#7a1b86] transform hover:scale-105'
                   : 'bg-gray-400 cursor-not-allowed'}`}
             >
-              Continue
+              {loading ? (
+                <i className="fas fa-spinner fa-spin text-lg text-white"></i>
+              ) : (
+                'Continue'
+              )}
             </button>
           </div>
         </div>
