@@ -97,7 +97,7 @@ export default function Home() {
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen bg-gradient-to-b from-gray-50 to-gray-100">
-        <div className="bg-white p-4 rounded-lg shadow-lg text-red-500 text-center">
+        <div className="bg-white p-6 rounded-lg shadow-lg text-red-500 text-center">
           {error}
         </div>
       </div>
@@ -117,64 +117,64 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen bg-gradient-to-b from-gray-50 to-gray-100 flex flex-col">
+    <div className={`min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 ${mounted ? 'fade-in' : ''}`}>
       <Script src="https://kit.fontawesome.com/18e66d329f.js"/>
       
       {/* Header */}
-      <div className="w-full bg-[#670773] text-white p-3 shadow-lg flex items-center justify-between relative z-10">
+      <div className="w-full bg-[#670773] text-white p-4 shadow-lg flex items-center justify-between relative z-10 slide-down">
         <button 
           onClick={() => setMenuOpen(!menuOpen)}
           className="hover:scale-110 transition-transform"
         >
-          <i className="fas fa-bars text-xl"></i>
+          <i className="fas fa-bars text-2xl"></i>
         </button>
-        <h1 className="text-xl font-bold">Pi Trader Official</h1>
+        <h1 className="text-2xl font-bold">Pi Trader Official</h1>
         <div className="w-8"></div>
       </div>
 
       {/* Notification */}
       {showNotification && (
-        <div className="fixed top-16 left-1/2 transform -translate-x-1/2 bg-[#670773] text-white px-4 py-2 rounded-lg shadow-lg z-50">
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 bg-[#670773] text-white px-6 py-3 rounded-lg shadow-lg z-50 animate-fade-in">
           This feature will be available soon
         </div>
       )}
 
-      {/* Main Content */}
-      <div className="flex-1 flex flex-col px-4 py-3 space-y-3">
-        <div className="bg-white rounded-lg p-3 shadow-md text-center">
-          <p className="text-[#670773] text-sm">
+      {/* Main Content - More Compact Layout */}
+      <div className="container mx-auto px-4 py-4">
+        <div className="bg-white rounded-lg p-4 shadow-md mb-4 text-center fade-in-up">
+          <p className="text-[#670773] text-sm font-medium">
             Pi Coin has not launched. This is the premarket price set by our team and does not represent Official data
           </p>
         </div>
 
-        <div className="bg-white rounded-lg p-4 shadow-md text-center">
-          <h2 className="text-4xl font-bold text-[#670773]">
-            $0.65/Pi
-          </h2>
-        </div>
+        <div className="text-center mb-6">
+          <div className="bg-white rounded-lg p-4 shadow-md mb-4">
+            <h2 className="text-4xl font-bold text-[#670773]">
+              $0.65/Pi
+            </h2>
+          </div>
 
-        <div className="flex-1 flex items-center justify-center">
-          <div className="relative w-48 h-48">
+          <div className="relative w-48 h-48 mx-auto mb-6 scale-in">
             <img 
-              src="/public/binance.jpg" 
+              src="/api/placeholder/400/320" 
               alt="Pi Coin" 
-              className="w-full h-full object-cover rounded-full shadow-xl"
+              className="w-full h-full object-cover rounded-full shadow-xl hover:scale-105 transition-transform duration-300"
             />
           </div>
-        </div>
 
-        <div className="flex flex-col gap-3 pb-4">
-          <Link href="/PaymentMethods" className="w-full">
-            <button className="w-full bg-[#670773] text-white text-lg font-bold py-3 px-6 rounded-full shadow-lg hover:bg-[#7a1b86] transition-colors">
-              Sell Your Pi
+          <div className="flex flex-col gap-3 items-center slide-up">
+            <Link href="/PaymentMethods" className="w-full max-w-xs">
+              <button className="w-full bg-[#670773] text-white text-lg font-bold py-3 px-6 rounded-full shadow-lg hover:bg-[#7a1b86] transform hover:scale-105 transition-all duration-300 active:scale-95">
+                Sell Your Pi
+              </button>
+            </Link>
+            <button 
+              onClick={handleBuyPi}
+              className="w-full max-w-xs bg-white text-[#670773] text-lg font-bold py-3 px-6 rounded-full shadow-lg border-2 border-[#670773] hover:bg-[#670773] hover:text-white transform hover:scale-105 transition-all duration-300 active:scale-95"
+            >
+              Buy Pi
             </button>
-          </Link>
-          <button 
-            onClick={handleBuyPi}
-            className="w-full bg-white text-[#670773] text-lg font-bold py-3 px-6 rounded-full shadow-lg border-2 border-[#670773] hover:bg-[#670773] hover:text-white transition-colors"
-          >
-            Buy Pi
-          </button>
+          </div>
         </div>
       </div>
 
@@ -185,14 +185,14 @@ export default function Home() {
             onClick={() => setMenuOpen(false)} 
             className="absolute top-4 right-4 text-white hover:scale-110 transition-transform"
           >
-            <i className="fas fa-times text-xl"></i>
+            <i className="fas fa-times text-2xl"></i>
           </button>
-          <h2 className="text-lg font-bold mt-6">Menu</h2>
+          <h2 className="text-xl font-bold mt-8">Menu</h2>
         </div>
-        <nav className="mt-2">
-          <ul>
+        <nav className="mt-4">
+          <ul className="space-y-2">
             {['Home', 'Transaction History', 'Live Support', 'Profile', 'Invite & Earn', 'Admin'].map((item, index) => (
-              <li key={index}>
+              <li key={index} className="menu-item" style={{animationDelay: `${index * 0.1}s`}}>
                 <a 
                   href="#" 
                   onClick={(e) => {
@@ -228,6 +228,63 @@ export default function Home() {
         }
         @keyframes spin {
           to { transform: rotate(360deg); }
+        }
+        .fade-in {
+          opacity: 0;
+          animation: fadeIn 0.5s ease-out forwards;
+        }
+        .fade-in-up {
+          opacity: 0;
+          transform: translateY(20px);
+          animation: fadeInUp 0.5s ease-out forwards;
+        }
+        .slide-down {
+          transform: translateY(-100%);
+          animation: slideDown 0.5s ease-out forwards;
+        }
+        .slide-up {
+          opacity: 0;
+          transform: translateY(50px);
+          animation: slideUp 0.5s ease-out forwards;
+        }
+        .scale-in {
+          opacity: 0;
+          transform: scale(0.8);
+          animation: scaleIn 0.5s ease-out forwards;
+        }
+        .menu-item {
+          opacity: 0;
+          animation: slideIn 0.3s ease-out forwards;
+        }
+        @keyframes fadeIn {
+          to { opacity: 1; }
+        }
+        @keyframes fadeInUp {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes slideDown {
+          to { transform: translateY(0); }
+        }
+        @keyframes slideUp {
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+        @keyframes scaleIn {
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        @keyframes slideIn {
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
         }
       `}</style>
     </div>
