@@ -58,7 +58,7 @@ const MergedPaymentPage = () => {
   const [piAddress, setPiAddress] = useState<string>('');
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [paymentAddress, setPaymentAddress] = useState<string>('');
-  const [userLevel, setUser Level] = useState<number>(1);
+  const [userLevel, setUserLevel] = useState<number>(1);
   const [basePrice, setBasePrice] = useState<number>(0.15);
   const [showPaymentMethods, setShowPaymentMethods] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
