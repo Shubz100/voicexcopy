@@ -58,25 +58,26 @@ const MergedPaymentPage = () => {
   const [piAddress, setPiAddress] = useState<string>('');
   const [selectedPayment, setSelectedPayment] = useState<string>('');
   const [paymentAddress, setPaymentAddress] = useState<string>('');
-  const [userLevel, setUserLevel] = useState<number>(1);
+  const [userLevel, setUser Level] = useState<number>(1);
   const [basePrice, setBasePrice] = useState<number>(0.15);
   const [showPaymentMethods, setShowPaymentMethods] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [showSummary, setShowSummary] = useState(false);
   const walletAddress = 'GHHHjJhGgGfFfHjIuYrDc';
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const tg = (window as any).Telegram?.WebApp;
     if (tg) {
-      const webAppUser = tg.initDataUnsafe?.user;
-      if (webAppUser) {
-        setTelegramId(webAppUser.id);
-        fetchUserData(webAppUser.id);
+      const webAppUser  = tg.initDataUnsafe?.user;
+      if (webAppUser ) {
+        setTelegramId(webAppUser .id);
+        fetchUser Data(webAppUser .id);
       }
     }
   }, []);
 
-  const fetchUserData = async (userId: number): Promise<void> => {
+  const fetchUser Data = async (userId: number): Promise<void> => {
     try {
       const response = await fetch(`/api/user`, {
         method: 'POST',
@@ -86,10 +87,10 @@ const MergedPaymentPage = () => {
       const userData = await response.json();
       setImageUploaded(userData.isUpload || false);
       setImageUrl(userData.imageUrl || null);
-      setUserLevel(userData.level || 1);
+      setUser Level(userData.level || 1);
       setBasePrice(userData.baseprice || 0.15);
       if (userData.piaddress) {
-        setPiAddress(userData.piaddress[userData.piaddress.length - 1]);
+        setPiAddress(userData.piaddress[userData.pi address.length - 1]);
       }
     } catch (error) {
       console.error('Error fetching user data:', error);
@@ -167,40 +168,48 @@ const MergedPaymentPage = () => {
     return (amount * totalRate).toFixed(2);
   };
 
+  const calculatePricePerPi = () => {
+    const selectedMethod = paymentMethods.find(m => m.id === selectedPayment);
+    const paymentBonus = selectedMethod?.bonus || 0;
+    const levelBonus = getLevelBonus(userLevel);
+    return (basePrice + paymentBonus + levelBonus).toFixed(2);
+  };
+
   const handleContinue = async () => {
     if (telegramId && piAmount && imageUrl && selectedPayment && paymentAddress) {
-      setIsLoading(true);
-      try {
-        // Save payment method data
-        await fetch('/api/payment', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegramId,
-            paymentMethod: selectedPayment,
-            paymentAddress,
-            transactionStatus: "processing"
-          })
-        });
+      setShowSummary(true);
+    }
+  };
 
-        // Save Pi amount and address
-        await fetch('/api/piamount', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            telegramId,
-            amount: piAmount,
-            imageUrl: imageUrl,
-            piaddress: piAddress
-          })
-        });
-        
-        router.push('/summary');
-      } catch (error) {
-        console.error('Error saving data:', error);
-      } finally {
-        setIsLoading(false);
-      }
+  const handleConfirm = async () => {
+    try {
+      // Save payment method data
+      await fetch('/api/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId,
+          paymentMethod: selectedPayment,
+          paymentAddress,
+          transactionStatus: "processing"
+        })
+      });
+
+      // Save Pi amount and address
+      await fetch('/api/piamount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          telegramId,
+          amount: piAmount,
+          imageUrl: imageUrl,
+          piaddress: piAddress
+        })
+      });
+      
+      router.push('/summary');
+    } catch (error) {
+      console.error('Error saving data:', error);
     }
   };
 
@@ -226,7 +235,7 @@ const MergedPaymentPage = () => {
             <div className="flex items-center space-x-2">
               <div className="flex-1 bg-gray-100 p-3 rounded-lg font-mono text-sm break-all">
                 {walletAddress}
-              </div>
+              </div >
               <button
                 onClick={handleCopyAddress}
                 className="bg-[#670773] text-white p-2 rounded-lg hover:bg-[#7a1b86] transition-colors"
@@ -393,6 +402,61 @@ const MergedPaymentPage = () => {
               )}
             </button>
           </div>
+
+          {/* Summary Popup */}
+          {showSummary && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end justify-center p-4 z-50 animate-fade-in">
+              <div className="bg-white w-full max-w-md rounded-t-xl p-6 transform translate-y-0 transition-transform duration-300 ease-out">
+                <h3 className="text-lg font-semibold text-[#670773] mb-4">Transaction Summary</h3>
+                
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Amount of Pi Sold:</span>
+                    <span className="font-semibold">{piAmount} Pi</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Price per Pi:</span>
+                    <span className="font-semibold">${calculatePricePerPi()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Amount to be Received:</span>
+                    <span className="font-semibold">${calculateUSDT(piAmount)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Payment Method:</span>
+                    <span className="font-semibold">{paymentMethods.find(m => m.id === selectedPayment)?.label}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Payment Address:</span>
+                    <span className="font-semibold break-all text-sm">{paymentAddress}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Pi Wallet Address:</span>
+                    <span className="font-semibold break-all text-sm">{piAddress}</span>
+                  </div>
+                </div>
+
+                <p className="text-gray-600 text-sm mb-6 text-center">
+                  Make sure all the information is correct
+                </p>
+
+                <div className="flex space-x-4">
+                  <button
+                    onClick={() => setShowSummary(false)}
+                    className="flex-1 py-3 px-4 rounded-lg border border-[#670773] text-[#670773] font-semibold hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirm}
+                    className="flex-1 py-3 px-4 rounded-lg bg-[#670773] text-white font-semibold hover:bg-[#7a1b86] transition-colors"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Notification for copy */}
