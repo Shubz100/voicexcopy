@@ -150,13 +150,13 @@ export default function Home() {
         <div className="text-center mb-6">
           <div className="bg-white rounded-lg p-4 shadow-md mb-4">
             <h2 className="text-4xl font-bold text-[#670773]">
-              $0.65/Pi
+              ~$0.41/Pi
             </h2>
           </div>
 
           <div className="relative w-48 h-48 mx-auto mb-6 scale-in">
             <img 
-              src="/api/placeholder/400/320" 
+              src="https://i.imgur.com/2E3jTAp.png" 
               alt="Pi Coin" 
               className="w-full h-full object-cover rounded-full shadow-xl hover:scale-105 transition-transform duration-300"
             />
@@ -191,7 +191,7 @@ export default function Home() {
         </div>
         <nav className="mt-4">
           <ul className="space-y-2">
-            {['Home', 'Transaction History', 'Live Support', 'Profile', 'Invite & Earn', 'Admin'].map((item, index) => (
+            {['Home', 'Transaction History', 'Live Support', 'Profile'].map((item, index) => (
               <li key={index} className="menu-item" style={{animationDelay: `${index * 0.1}s`}}>
                 <a 
                   href="#" 
