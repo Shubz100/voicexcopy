@@ -289,7 +289,7 @@ const MergedPaymentPage = () => {
           {/* Amount Section */}
           <div className="bg-white rounded-lg p-6 shadow-md">
             <h2 className="text-lg font-semibold text-[#670773] mb-3">
-              How many Pi you want to sell? (Minimum: 10Pi)
+              How many Pi you want to sell?
             </h2>
             <input
               type="number"
