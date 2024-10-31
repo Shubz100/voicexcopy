@@ -15,13 +15,13 @@ const IntroPage = ({ telegramId }: { telegramId: number }) => {
       color: "bg-purple-100"
     },
     {
-      title: "Real-time Updates",
-      description: "Get the latest Pi coin prices instantly",
+      title: "Level Up Your Profile",
+      description: "Higher Levels will give you Higher rate",
       color: "bg-green-100"
     },
     {
-      title: "Start Trading",
-      description: "Ready to begin your Pi trading journey?",
+      title: "Tired of scams?",
+      description: "Sell as low as 10 Pi",
       color: "bg-yellow-100"
     }
   ];
