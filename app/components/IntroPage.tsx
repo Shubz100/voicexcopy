@@ -21,7 +21,7 @@ const IntroPage = ({ telegramId }: { telegramId: number }) => {
     },
     {
       title: "Tired of scams?",
-      description: "Sell as low as 10 Pi",
+      description: "Sell as low as 1 Pi",
       color: "bg-yellow-100"
     }
   ];
