@@ -41,7 +41,7 @@ const getPaymentBonus = (paymentMethod: string): number => {
     case 'applepay':
       return 0.15
     case 'mastercard':
-      return 0
+      return 0.25
     default:
       return 0
   }
