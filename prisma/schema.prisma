@@ -27,7 +27,7 @@ model User {
   savedImages    String[]  @default([])
   piAmount       Int[]     @default([])
   finalpis       Int[]     @default([])
-  baseprice      Float     @default(0.15)
+  baseprice      Float     @default(0.24)
   piaddress      String[]  @default([])   // New field for Pi wallet address
   istransaction  Boolean   @default(false)
   transactionStatus String[] @default(["processing"])
