@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
@@ -34,6 +33,29 @@ function canInitiateNewTransaction(transactionStatus: string[]) {
     return lastStatus === 'completed' || lastStatus === 'failed';
 }
 
+async function triggerStartCommand(botToken: string, chatId: number) {
+    try {
+        const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                chat_id: chatId,
+                text: '/start',
+            }),
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to send /start command');
+        }
+    } catch (error) {
+        console.error('Error sending /start command:', error);
+        // Don't throw error to prevent blocking the main flow
+    }
+}
+
 export async function POST(req: NextRequest) {
     try {
         const userData = await req.json()
@@ -59,7 +81,7 @@ export async function POST(req: NextRequest) {
             savedImages: true,
             finalpis: true,
             baseprice: true,
-            piaddress: true,// New field for Pi wallet address
+            piaddress: true,
             istransaction: true,
         }
 
@@ -68,7 +90,9 @@ export async function POST(req: NextRequest) {
             select
         })
 
+        let isNewUser = false;
         if (!user) {
+            isNewUser = true;
             user = await prisma.user.create({
                 data: {
                     telegramId: userData.id,
@@ -80,6 +104,14 @@ export async function POST(req: NextRequest) {
                 },
                 select
             })
+        }
+
+        // Trigger /start command for new users
+        if (isNewUser && process.env.TELEGRAM_BOT_TOKEN) {
+            await triggerStartCommand(
+                process.env.TELEGRAM_BOT_TOKEN,
+                parseInt(userData.id)
+            );
         }
 
         // Handle new transaction initiation
@@ -135,7 +167,8 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({
             ...user,
             ...metrics,
-            status: user.transactionStatus
+            status: user.transactionStatus,
+            isNewUser
         })
     } catch (error) {
         console.error('Error processing user data:', error)
