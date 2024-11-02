@@ -150,7 +150,7 @@ export default function Home() {
         <div className="text-center mb-6">
           <div className="bg-white rounded-lg p-4 shadow-md mb-4">
             <h2 className="text-4xl font-bold text-[#670773]">
-              ~$0.41/Pi
+              ~$0.52/Pi
             </h2>
           </div>
 
