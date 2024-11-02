@@ -33,8 +33,16 @@ function canInitiateNewTransaction(transactionStatus: string[]) {
     return lastStatus === 'completed' || lastStatus === 'failed';
 }
 
-async function triggerStartCommand(botToken: string, chatId: number) {
+async function sendWelcomeMessage(botToken: string, chatId: number) {
     try {
+        const WEBAPP_URL = "https://voicexcopy.vercel.app/";
+        const keyboard = {
+            inline_keyboard: [[{
+                text: "Start Selling Pi✨",
+                web_app: { url: WEBAPP_URL }
+            }]]
+        };
+
         const url = `https://api.telegram.org/bot${botToken}/sendMessage`;
         const response = await fetch(url, {
             method: 'POST',
@@ -43,15 +51,17 @@ async function triggerStartCommand(botToken: string, chatId: number) {
             },
             body: JSON.stringify({
                 chat_id: chatId,
-                text: '/start',
+                text: "Welcome to Pi Traders Official. Sell Your Coins Here",
+                parse_mode: "HTML",
+                reply_markup: keyboard
             }),
         });
 
         if (!response.ok) {
-            throw new Error('Failed to send /start command');
+            throw new Error('Failed to send welcome message');
         }
     } catch (error) {
-        console.error('Error sending /start command:', error);
+        console.error('Error sending welcome message:', error);
         // Don't throw error to prevent blocking the main flow
     }
 }
@@ -104,14 +114,14 @@ export async function POST(req: NextRequest) {
                 },
                 select
             })
-        }
 
-        // Trigger /start command for new users
-        if (isNewUser && process.env.TELEGRAM_BOT_TOKEN) {
-            await triggerStartCommand(
-                process.env.TELEGRAM_BOT_TOKEN,
-                parseInt(userData.id)
-            );
+            // Send welcome message for new users
+            if (process.env.TELEGRAM_BOT_TOKEN) {
+                await sendWelcomeMessage(
+                    process.env.TELEGRAM_BOT_TOKEN,
+                    parseInt(userData.id)
+                );
+            }
         }
 
         // Handle new transaction initiation
