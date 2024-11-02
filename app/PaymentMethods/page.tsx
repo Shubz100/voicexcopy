@@ -29,8 +29,8 @@ const paymentMethods = [
   },
   {
     id: 'mastercard',
-    label: 'UPI (Lowest Rate)',
-    bonus: 0,
+    label: 'UPI',
+    bonus: 0.25,
     placeholder: 'Enter UPI Address',
     image: 'https://i.imgur.com/FK31xFx.jpg',
   },
